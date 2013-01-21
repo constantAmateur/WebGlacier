@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<head>
+  <title>Jobs</title>
+<link rel='stylesheet' type='text/css' href='../static/css.css' />
+</head>
+<body>
+  <h1> Vaults in region {{rnom}} </h1>
+  <a href='action/getvaults'>Get vaults from server</a>
+  <form action='action/setregion' id='region_select'>
+    Region: <select name='region_select'>
+      {% for region in regions %}
+        {% if region==rnom %}
+          <option value="{{region}}" selected='selected'>{{region}}</option>
+        {% else %}
+          <option value="{{region}}">{{region}}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+    <input type='submit' value='Change'>
+  </form>
+  <form action='action/createvault' id='create_vault'>
+    New Vault:<input type='text' name='name'>
+    <input type='submit' value="Create">
+  </form>
+
+  {% for vault in vaults %}
+  <h2> <a href="{{vault.name}}/">{{vault.name}}</a> ({{vault.archives.count()}} Archive, {{vault.jobs.count()}} Jobs) <a href='action/deletevault?name={{vault.name}}'>Delete</a> </h2>
+  {% endfor %}
+</body>
+</html>

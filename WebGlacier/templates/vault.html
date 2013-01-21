@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<head>
+  <title>Jobs</title>
+<link rel='stylesheet' type='text/css' href='../static/css.css' />
+</head>
+<body>
+  <a href="/glacier/"> Home </a>
+  <h1> Contents of {{ vault.name }}</h1>
+  {% if vault.lock %}
+    <h1><em> VAULT LOCKED! </em></h1>
+    No archives can be added or removed until inventory job has completed.
+  {% else %}
+    <h3> <a href="action/getinventory">Load archive data from server</a></h3>
+  {% endif %}
+  <h2> Archives </h2>
+  {% if not vault.lock %}
+  <a href="action/addfile">Add archive</a></br>
+  {% endif %}
+    <table>
+      <tr>
+        <th>Filename</th>
+        <th>Description</th>
+        <th>Filesize</th>
+        <th>Retrieval</th>
+        {% if not vault.lock %}
+          <th>Delete</th>
+        {% endif %}
+      </tr>
+      {% for archive in vault.archives.all() %}
+      <tr>
+        <td> {{ archive.filename }} </td>
+        <td> {{ archive.description }} </td>
+        <td> {{ archive.filesize }} </td>
+        <td>
+          {% set live=archive.get_download_jobs() %}
+          {% if live==None %}
+            <a href="action/getarchive?archive_id={{archive.archive_id}}">Request Data</a>
+          {% elif not live[0].completed %}
+            Please wait...
+          {% else %}
+            <a href="action/download?archive_id={{archive.archive_id}}">Download</a>
+          {% endif %}
+        </td>
+        {% if not vault.lock %}
+        <td> <a href="action/deletearchive?archive_id={{archive.archive_id}}">Delete</a> </td>
+        {% endif %}
+      {% endfor %}
+      </tr>
+    </table>
+  <h2> Jobs </h2>
+    <table>
+      <tr>
+        <th>Jobtype</th>
+        <th>Completed</th>
+        <th>Status Code</th>
+        <th>Status Message</th>
+      </tr>
+      {% for job in vault.jobs.filter_by(live=True).all() %}
+      <tr>
+        <td> {{ job.action }} </td>
+        <td> {{ job.completed }} </td>
+        <td> {{ job.status_code }} </td>
+        <td> {{ job.status_message }} </td>
+     </tr>
+      {% endfor %}
+    </table>
+</body>
+</html>

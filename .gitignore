@@ -1,0 +1,10 @@
+#Anything hidden
+.*
+#But not me obviously...
+!/.gitignore
+#vi files
+*.swp
+#Compiled python
+*.pyc
+#Don't want to track the virtualenv
+venv/
