@@ -95,7 +95,14 @@ def process_archive(archive,vault):
   db.session.commit()
   return tmp
 
-def upload_archive(fname,vault,chunk=None):
+def upload_archive(fname,vault,chunk=None,true_path=None):
+  """
+  Usually fname is just the name of a temporary file, in which
+  case the true pathname of the file must be given to true_path
+  or the database will record garbage for the filename and path
+  """
+  if true_path is None:
+    true_path = fname
   if not os.path.isfile(fname):
     print("%s is not a valid file!  Upload failed!" % fname)
     return None
@@ -105,12 +112,12 @@ def upload_archive(fname,vault,chunk=None):
   uploader = ConcurrentUploader(handler,str(vault.name),part_size=chunk)
   print("Beginning upload of file %s.  Please by patient, there is no progress bar..." % fname)
   #description = raw_input("Enter description for file %s (enter nothing to use filename):"%fname)
-  description="Automatic upload of "+fname
+  description="Automatic upload of "+true_path
   archive_id = uploader.upload(fname,description)
   print("Successfully uploaded %s" % fname)
   filesize = os.path.getsize(fname) 
-  filename = os.path.basename(fname)
-  fullpath = os.path.abspath(fname) 
+  filename = os.path.basename(true_path)
+  fullpath = true_path
   archive = Archive(archive_id,description,vault,filename=filename,fullpath=fullpath,filesize=filesize)
   db.session.add(archive)
   db.session.commit()
