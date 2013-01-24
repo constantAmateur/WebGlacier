@@ -1,5 +1,8 @@
-from WebGlacier import db
+from WebGlacier import db,app,handlers
 from datetime import datetime
+import math
+import os
+import subprocess
 
 class Archive(db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +37,42 @@ class Archive(db.Model):
     insertion_date = datetime.utcnow()
     self.insertion_date = insertion_date
     self.SHA256_tree_hash = tree_hash
+
+  def cached(self):
+    """
+    Check if the archive is in the cache.
+    If it is not, check if it is OK to insert it.
+    returns 1 for in cache,
+    returns 2 for not in cache but insertion ok
+    returns -1 for not in cache and insertion not ok
+    """
+    from utils import ensure_path
+    #Is the cache even enabled?
+    if app.config["LOCAL_CACHE"]=='':
+      return -1
+    tgt=os.path.join(app.config["LOCAL_CACHE"],self.vault.region,self.vault.name,self.archive_id)
+    if os.path.isfile(tgt):
+      #Exists in cache
+      if os.path.getsize(tgt)!=self.filesize:
+        #But it's the wrong size! Delete what's there.
+        os.remove(tgt)
+      else:
+        #Right size, could check the hash too but eh
+        return 1
+    #Test if it's OK to insert into cache
+    #Is the file too big, regardless of how much other stuff is used
+    if self.filesize >= app.config["LOCAL_CACHE_SIZE"] or self.filesize >= app.config["LOCAL_CACHE_MAX_FILE_SIZE"]:
+        return -1
+    #Bah, we need to know how much space is left...
+    du = subprocess.Popen(["du",'-s',app.config["LOCAL_CACHE"]],stdout=subprocess.PIPE) 
+    out = du.communicate()[0]
+    dsize = int(out[:out.find('\t')])
+    if self.filesize<app.config["LOCAL_CACHE_SIZE"]-dsize:
+      #We've still got space to add this file...
+      ensure_path(tgt)
+      return 2
+    #At this point we'd have to delete something to make this fit in, so give up?
+    return -1
 
   def get_download_jobs(self):
     """
@@ -91,6 +130,42 @@ class Job(db.Model):
   SNS_topic = db.Column(db.String(100))
   #Whether the job still exists or not
   live = db.Column(db.Boolean)
+
+  def stream_output(self,chunk_size=None,file_handler=None):
+    """
+    A generator that can be used to stream a download job from Amazon's
+    servers without saving it locally.  Obviously the job must be live,
+    complete and successful.  The database values are taken to be true
+    for each of these, so it makes sense to run this straight after
+    checking the status of jobs.
+
+    chunk_size has its usual meaning and will default to the config value
+    if not given
+
+    If file_handler is a file object, which should be open for writing,
+    then in addition to streaming the response, the object will be written
+    to file.  The object will be closed after the last chunk has been processed.
+    """
+    handler = handlers[self.vault.region]
+    if self.action!='download':
+      raise TypeError("Can only stream download jobs")
+    if not self.live or not self.completed:
+      raise AttributeError("Job is not live and complete.")
+    if chunk_size is None:
+      chunk_size=int(app.config['CHUNK_SIZE'])
+    file_size = self.archive.filesize
+    vault_name = self.vault.name
+    job_id = self.job_id
+    num_chunks = int(math.ceil(file_size / float(chunk_size)))
+    for i in xrange(num_chunks):
+      byte_range = ((i * chunk_size), ((i + 1) * chunk_size) - 1)
+      response = handler.get_job_output(vault_name,job_id,byte_range)
+      if file_handler:
+        file_handler.write(response.read())
+        #Close after last chunk
+        if i==num_chunks-1:
+          file_handler.close()
+      yield response.read()
 
   def __init__(self,job_id,action,vault,archive=None,completed=False,completion_date=None, 
       creation_date = None, description='', retrieval_range ='',
@@ -156,7 +231,7 @@ class Vault(db.Model):
       pending.sort(key=lambda x: x.creation_date,reverse=True)
       return pending
     #If they're all done
-    done = [x for x in active if x.completed and x.status_message=="Succeeded"]
+    done = [x for x in live if x.completed and x.status_message=="Succeeded"]
     #One of them succeeded, so present the link
     if len(done)!=0:
       done.sort(key=lambda x: x.completion_date,reverse=True)

@@ -5,6 +5,14 @@ import os
 from WebGlacier import app, handlers, db
 from models import Vault,Archive,Job
 
+def ensure_path(tgt):
+  """
+  Makes sure the directory needed to store this file exits
+  """
+  directory=os.path.dirname(tgt)
+  if not os.path.exists(directory):
+    os.makedirs(directory)
+
 def get_set_region():
   """
   Gets the current region by looking first in url args, then in the session object, finally reverting to default.
@@ -15,15 +23,10 @@ def get_set_region():
     return session['region']
   return app.config["DEFAULT_REGION"]
 
-def get_handler(layer=1,region=None):
+def get_handler(region=None):
   if region is None:
     region=get_set_region()
-  if layer==1:
-    return handlers[region][0]
-  elif layer==2:
-    return handlers[region][1]
-  else:
-    return None
+  return handlers[region]
 
 def process_vault(vault):
   """

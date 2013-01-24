@@ -12,8 +12,7 @@ if "SQLALCHEMY_DATABASE_URI" not in app.config:
 #Make a dictionary of handlers for the amazon servers
 handlers = dict()
 for region in glacier.regions():
-  handlers[region.name]=[Layer1(aws_access_key_id = app.config["AWS_ACCESS_KEY"], aws_secret_access_key = app.config["AWS_SECRET_ACCESS_KEY"],region_name=region.name)]
-  handlers[region.name].append(connect_glacier(aws_access_key_id = app.config["AWS_ACCESS_KEY"], aws_secret_access_key = app.config["AWS_SECRET_ACCESS_KEY"],region_name=region.name))
+  handlers[region.name]=Layer1(aws_access_key_id = app.config["AWS_ACCESS_KEY"], aws_secret_access_key = app.config["AWS_SECRET_ACCESS_KEY"],region_name=region.name)
 
 #Make the database handler
 db = SQLAlchemy(app)

@@ -1,9 +1,10 @@
-from flask import request, session
+from flask import request, session, Response, stream_with_context
 from flask import abort, redirect, url_for
 from flask import send_from_directory
-from werkzeug import secure_filename
+from werkzeug import secure_filename, Headers
 from tempfile import mkstemp
 import os
+ 
 
 from WebGlacier import app,  db
 from WebGlacier.utils import get_set_region, get_handler, process_job, process_archive,upload_archive
@@ -18,6 +19,52 @@ def check_job_status(vault_name):
     abort(401)
   #Get the live jobs from Amazon
   live_jobs = handler.list_jobs(vault.name)
+  #params={}
+  #uri = 'vaults/%s/jobs' % (vault.name)
+  #verb="GET"
+  #resource=uri
+  #headers=None
+  #data=''
+  #ok_responses=(200,)
+  #sender=None
+  #response_headers=None
+  #if headers is None:
+  #  headers = {}
+  #headers['x-amz-glacier-version'] = handler.Version
+  #uri = '/%s/%s' % (handler.account_id, resource)
+  #from boto.connection import AWSAuthConnection
+  #from flask import make_response
+  #import httplib
+  #method=verb
+  #path=uri
+  #host=None
+  #override_num_retries=None
+  #auth_path=None
+  #self=handler
+  #http_request = self.build_base_http_request(method, path, auth_path,params, headers, data, host)
+  #http_request.authorize(connection=self)
+  #temp = make_response(redirect("https://glacier.eu-west-1.amazonaws.com/-/vault/Matthew_Dev/jobs?"))
+  ##temp.headers={}
+  #temp.direct_passthrough=True
+  #for k,v in http_request.headers.iteritems():
+  #  temp.headers[k] = v
+  #return temp
+  #connection = httplib.HTTPSConnection(self.host)
+  ##connection = self.get_http_connection(http_request.host, self.is_secure)
+  #connection.request(http_request.method, http_request.path,http_request.body, http_request.headers)
+  #response = connection.getresponse()
+ 
+  ##response = self._mexe(http_request, sender, override_num_retries)
+
+
+  ##response = AWSAuthConnection.make_request(handler, verb, uri,
+  ##                                                params=params,
+  ##                                                headers=headers,
+  ##                                                sender=sender,
+  ##                                                data=data)
+  ##
+  ##live_jobs = handler.make_request('GET', uri, params=params)
+  #print response.read()
   #First update/add all of them to db
   for job in live_jobs['JobList']:
     process_job(job,vault)
@@ -174,8 +221,7 @@ def dload_archive(vault_name):
   """
   Asks glacier to get your data.  You'll have to wait for it to get back first...
   """
-  handler = get_handler(2)
-  region = handler.layer1.region.name
+  region = get_set_region()
   vault = Vault.query.filter_by(name=vault_name,region=region).first()
   if vault is None:
     abort(401)
@@ -186,21 +232,28 @@ def dload_archive(vault_name):
   if archive is None:
     abort(401)
   #Is there a finished job knocking about?
-  job=archive.jobs.filter_by(action='download',completed=True).first()
+  job=archive.jobs.filter_by(action='download',completed=True,live=True,status_message="Succeeded").first()
   if job is None:
     abort(401)
   #OK, everything exists, go ahead...
-  vv = handler.get_vault(str(vault.name))
-  jj = vv.get_job(str(job.job_id))
-  #Make a temp file and close it, but keep its name
-  t,fnom = mkstemp(dir=app.config['UPLOAD_FOLDER'])
-  os.fdopen(t).close()
-  jj.download_to_file(fnom)
-  #And do what with it?
-  if archive.filename!="NOT_GIVEN":
-    ret_name = archive.filename
+  if job.archive.filename!="NOT_GIVEN":
+    fname=job.archive.filename
   else:
-    ret_name = app.config["UNKNOWN_FILENAME"]
-  return send_from_directory(app.config["UPLOAD_FOLDER"],os.path.basename(fnom),attachment_filename=ret_name,as_attachment=True)
-
-
+    fname=app.config["UNKNOWN_FILENAME"]
+  cache=archive.cached()
+  #Returns 1 for in cache, 2 for not in cache but insertion is a go, -1 otherwise
+  if cache==1:
+    #Serve from cache
+    print "Serving from cache."
+    return send_from_directory(os.path.join(app.config["LOCAL_CACHE"],region,vault.name),archive.archive_id,attachment_filename=fname,as_attachment=True)
+  elif cache==2:
+    #Save to cache whilst serving
+    print "Adding to cache."
+    f = open(os.path.join(app.config["LOCAL_CACHE"],region,vault.name,archive.archive_id),'wb')
+  else:
+    #Don't add to cache, just serve
+    print "No cache, only serve."
+    f = None
+  h=Headers()
+  h.add("Content-Disposition",'attachment;filename="'+fname+'"')
+  return Response(stream_with_context(job.stream_output(file_handler=f)),headers=h)
