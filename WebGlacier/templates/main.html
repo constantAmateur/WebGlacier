@@ -1,31 +1,49 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
-<html lang="en">
-<head>
-  <title>Jobs</title>
-<link rel='stylesheet' type='text/css' href='../static/css.css' />
-</head>
-<body>
+{% from "macros.html" import list_vaults %}
+{% extends "base.html" %}
+{% block title %} Vault Select {% endblock %}
+{% block body %}
   <h1> Vaults in region {{rnom}} </h1>
-  <a href='action/getvaults'>Get vaults from server</a>
-  <form action='action/setregion' id='region_select'>
-    Region: <select name='region_select'>
-      {% for region in regions %}
-        {% if region==rnom %}
-          <option value="{{region}}" selected='selected'>{{region}}</option>
-        {% else %}
-          <option value="{{region}}">{{region}}</option>
-        {% endif %}
-      {% endfor %}
-    </select>
-    <input type='submit' value='Change'>
-  </form>
-  <form action='action/createvault' id='create_vault'>
-    New Vault:<input type='text' name='name'>
-    <input type='submit' value="Create">
-  </form>
+  {# <a href='action/getvaults'>Get vaults from server</a> #}
+  <table>
+    <tr>
+      <td>
+  <div id="RegionSelect">
+    <form action='action/setregion' id='region_select'>
+      <b>Region:</b>
+    </td>
+    <td>
+      <select name='region_select'>
+        {% for region in regions %}
+          {% if region==rnom %}
+            <option value="{{region}}" selected='selected'>{{region}}</option>
+          {% else %}
+            <option value="{{region}}">{{region}}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </td>
+    <td>
+      <input type='submit' value='Select'>
+    </td>
+    </form>
+  </div>
+  </tr>
+  <tr>
+    <td>
+      <div id="VaultCreate">
+        <form action='action/createvault' id='create_vault'>
+        <b>Add Vault:</b>
+    </td>
+    <td>
+      <input type='text' name='name'>
+    </td>
+    <td>
+      <input type='submit' value="Create">
+    </td>
+    </form>
+  </div>
+  </tr>
+</table>
 
-  {% for vault in vaults %}
-  <h2> <a href="{{vault.name}}/">{{vault.name}}</a> ({{vault.archives.count()}} Archive, {{vault.jobs.count()}} Jobs) <a href='action/deletevault?name={{vault.name}}'>Delete</a> </h2>
-  {% endfor %}
-</body>
-</html>
+  {{ list_vaults(vaults) }}
+{% endblock %}

@@ -8,7 +8,7 @@ import tempfile
  
 
 from WebGlacier import app,  db
-from WebGlacier.utils import get_set_region, get_handler, process_job, process_archive,upload_archive
+from WebGlacier.lib.db import get_set_region, get_handler, process_job, process_archive,upload_archive
 from models import Vault,Archive,Job
 
 @app.route("/glacier/<vault_name>/action/checkjobstatus")
@@ -33,7 +33,7 @@ def check_job_status(vault_name):
       db.session.commit()
   return redirect(url_for('main'))
  
-@app.route("/glacier/<vault_name>/action/addfile",methods=["GET","POST"])
+@app.route("/glacier/<vault_name>/action/addfile",methods=["POST"])
 def upload_file(vault_name):
   region = get_set_region()
   vault = Vault.query.filter_by(name=vault_name,region=region).first()
@@ -41,26 +41,16 @@ def upload_file(vault_name):
     abort(401)
   if vault.lock:
     abort(401)
-  if request.method == "POST":
-    file = request.files['file']
-    if file:
-      #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
-      tmp=tempfile.NamedTemporaryFile(dir=app.config["TEMP_FOLDER"],delete=False)
-      file.save(tmp)
-      tmp.close()
-      print "Server has accepted payload"
-      archive = upload_archive(tmp.name,vault,true_path=file.filename)
-      os.remove(tmp.name)
-      return redirect(url_for('main'))
-  return '''
-  <!doctype html>
-  <title>Upload new File</title>
-  <h1>Upload new File</h1>
-  <form action="" method=post enctype=multipart/form-data>
-    <p><input type=file name=file>
-       <input type=submit value=Upload>
-  </form>
-  '''
+  file = request.files['file']
+  if file:
+    #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
+    tmp=tempfile.NamedTemporaryFile(dir=app.config["TEMP_FOLDER"],delete=False)
+    file.save(tmp)
+    tmp.close()
+    print "Server has accepted payload"
+    archive = upload_archive(tmp.name,vault,true_path=file.filename)
+    os.remove(tmp.name)
+    return redirect(url_for('main'))
 
 @app.route("/glacier/<vault_name>/action/runjobs",methods=["GET"])
 def run_jobs(vault_name):
@@ -189,22 +179,21 @@ def dload_archive(vault_name):
   archive = Archive.query.filter_by(archive_id=request.args['archive_id']).first()
   if archive is None:
     abort(401)
+  if archive.filename!="NOT_GIVEN":
+    fname=archive.filename
+  else:
+    fname=app.config["UNKNOWN_FILENAME"]
+  #Are we serving from cache?
+  cache = archive.cached()
+  if cache==1:
+    print "Serving from cache."
+    return send_from_directory(os.path.join(app.config["LOCAL_CACHE"],region,vault.name),archive.archive_id,attachment_filename=fname,as_attachment=True)
   #Is there a finished job knocking about?
   job=archive.jobs.filter_by(action='download',completed=True,live=True,status_message="Succeeded").first()
   if job is None:
     abort(401)
   #OK, everything exists, go ahead...
-  if job.archive.filename!="NOT_GIVEN":
-    fname=job.archive.filename
-  else:
-    fname=app.config["UNKNOWN_FILENAME"]
-  cache=archive.cached()
-  #Returns 1 for in cache, 2 for not in cache but insertion is a go, -1 otherwise
-  if cache==1:
-    #Serve from cache
-    print "Serving from cache."
-    return send_from_directory(os.path.join(app.config["LOCAL_CACHE"],region,vault.name),archive.archive_id,attachment_filename=fname,as_attachment=True)
-  elif cache==2:
+  if cache==2:
     #Save to cache whilst serving
     print "Adding to cache."
     f = open(os.path.join(app.config["LOCAL_CACHE"],region,vault.name,archive.archive_id),'wb')

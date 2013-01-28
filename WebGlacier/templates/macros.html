@@ -1,0 +1,117 @@
+{% macro list_vaults(vaults) -%}
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Size</th>
+      <th>#Archives</th>
+      <th>#Jobs</th>
+      <th>Creation Date</th>
+      <th>Last Inventory Date</th>
+      <th>Delete</th>
+    </tr>
+  {% for vault in vaults %}
+    {{ render_vault(vault) }}
+  {% endfor %}
+  </table>
+{%- endmacro %}
+
+{% macro render_vault(vault) -%}
+  <tr>
+    <td> <b><a href="{{vault.name}}/">{{vault.name}}</a></b> </td>
+    <td> {{vault.human_size}} </td>
+    <td> {{vault.archives.count()}} </td>
+    <td> {{vault.jobs.filter_by(live=True).count()}} </td>
+    <td> {{vault.creation_date}} </td>
+    <td> {{vault.last_inventory_date}} </td>
+    <td> 
+      {% if not vault.lock %}
+        <a href="action/deletevault?name={{vault.name}}">D</a> 
+      {% else %}
+        L
+      {% endif %}
+    </td>
+  </tr>
+{%- endmacro %}
+
+{% macro list_vault_contents(vault) -%}
+  {{ list_archives(vault.archives.all(),lock=vault.lock) }}
+  {{ list_jobs(vault.jobs.filter_by(live=True).all(),lock=vault.lock) }}
+{%- endmacro %}
+
+{% macro list_archives(archives, lock=False) -%}
+  <table>
+    <tr>
+      <th>Filename</th>
+      <th>Size</th>
+      <th>Description</th>
+      <th>Full Path</th>
+      <th>Insertion Date</th>
+      <th>Retrieval</th>
+      {% if not lock %}
+        <th>Delete</th>
+      {% endif %}
+    </tr>
+    {% for archive in archives|sort(True,attribute='filename') %}
+      {{ render_archive(archive,lock=lock) }}
+    {% endfor %}
+  </table>
+{%- endmacro %}
+
+{% macro list_jobs(jobs, lock=False) -%}
+  <h2> Jobs </h2>
+  <table>
+    <tr>
+      <th>Jobtype</th>
+      <th>Description</th>
+      <th>Completed</th>
+      <th>Status Code</th>
+      <th>Status Message</th>
+      <th>Creation Date</th>
+      <th>Completion Date</th>
+    </tr>
+    {% for job in jobs|sort(attribute='completed') %}
+      {{ render_job(job,lock=lock) }}
+    {% endfor %}
+  </table>
+{%- endmacro %}
+
+{% macro render_archive(archive,lock=False) -%}
+  <div class="archive">
+  <tr>
+    <td> {{ archive.filename }} </td>
+    <td> {{ archive.human_size }} </td>
+    <td> {{ archive.description }} </td>
+    <td> {{ archive.fullpath }} </td>
+    <td> {{ archive.insertion_date }} </td>
+    <td>
+      {% if archive.is_cached() %}
+        <a href="action/download?archive_id={{archive.archive_id}}">Download</a>
+      {% else %}
+        {% set live=archive.get_download_jobs() %}
+        {% if live==None %}
+          <a href="action/getarchive?archive_id={{archive.archive_id}}">Request Data</a>
+        {% elif not live[0].completed %}
+          Please wait...
+        {% else %}
+          <a href="action/download?archive_id={{archive.archive_id}}">Download</a>
+        {% endif %}
+      {% endif %}
+    </td>
+    {% if not lock %}
+      <td> <a href="action/deletearchive?archive_id={{archive.archive_id}}">Delete</a> </td>
+    {% endif %}
+  </tr>
+</div>
+{%- endmacro %}
+
+{% macro render_job(job,lock=False) -%}
+  <tr>
+    <td> {{ job.action }} </td>
+    <td> {{ job.description }} </td>
+    <td> {{ job.completed }} </td>
+    <td> {{ job.status_code }} </td>
+    <td> {{ job.status_message }} </td>
+    <td> {{ job.creation_date }} </td>
+    <td> {{ job.completion_date }} </td>
+  </tr>
+{%- endmacro %}

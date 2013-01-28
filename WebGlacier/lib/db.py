@@ -3,15 +3,7 @@ from boto.glacier.concurrent import ConcurrentUploader
 import os
 
 from WebGlacier import app, handlers, db
-from models import Vault,Archive,Job
-
-def ensure_path(tgt):
-  """
-  Makes sure the directory needed to store this file exits
-  """
-  directory=os.path.dirname(tgt)
-  if not os.path.exists(directory):
-    os.makedirs(directory)
+from WebGlacier.models import Vault,Archive,Job
 
 def get_set_region():
   """
@@ -39,6 +31,9 @@ def process_vault(vault):
     tmp=Vault(vault["VaultName"],vault["VaultARN"].split(":")[3])
   tmp.creation_date = vault["CreationDate"]
   tmp.ARN = vault['VaultARN']
+  tmp.last_inventory_date = vault["LastInventoryDate"]
+  tmp.no_of_archives=vault["NumberOfArchives"]
+  tmp.size=vault["SizeInBytes"]
   db.session.add(tmp)
   db.session.commit()
   return tmp

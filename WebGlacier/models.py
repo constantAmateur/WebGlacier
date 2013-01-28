@@ -1,4 +1,5 @@
 from WebGlacier import db,app,handlers
+from WebGlacier.lib.misc import human_readable,ensure_path
 from datetime import datetime
 import math
 import os
@@ -38,6 +39,10 @@ class Archive(db.Model):
     self.insertion_date = insertion_date
     self.SHA256_tree_hash = tree_hash
 
+  @property
+  def human_size(self):
+    return human_readable(self.filesize)
+
   def cached(self):
     """
     Check if the archive is in the cache.
@@ -46,19 +51,13 @@ class Archive(db.Model):
     returns 2 for not in cache but insertion ok
     returns -1 for not in cache and insertion not ok
     """
-    from utils import ensure_path
     #Is the cache even enabled?
     if app.config["LOCAL_CACHE"]=='':
       return -1
+    #Is it there?
+    if self.is_cached():
+      return 1
     tgt=os.path.join(app.config["LOCAL_CACHE"],self.vault.region,self.vault.name,self.archive_id)
-    if os.path.isfile(tgt):
-      #Exists in cache
-      if os.path.getsize(tgt)!=self.filesize:
-        #But it's the wrong size! Delete what's there.
-        os.remove(tgt)
-      else:
-        #Right size, could check the hash too but eh
-        return 1
     #Test if it's OK to insert into cache
     #Is the file too big, regardless of how much other stuff is used
     if self.filesize >= app.config["LOCAL_CACHE_SIZE"] or self.filesize >= app.config["LOCAL_CACHE_MAX_FILE_SIZE"]:
@@ -73,6 +72,20 @@ class Archive(db.Model):
       return 2
     #At this point we'd have to delete something to make this fit in, so give up?
     return -1
+
+  def is_cached(self):
+    if app.config["LOCAL_CACHE"]=='':
+      return False
+    tgt=os.path.join(app.config["LOCAL_CACHE"],self.vault.region,self.vault.name,self.archive_id)
+    if os.path.isfile(tgt):
+      #Exists in cache
+      if os.path.getsize(tgt)!=self.filesize:
+        #But it's the wrong size! Delete what's there.
+        os.remove(tgt)
+        return False
+      else:
+        #Right size, could check the hash too but eh
+        return True
 
   def get_download_jobs(self):
     """
@@ -216,6 +229,25 @@ class Vault(db.Model):
   #If trying to initialise from server, don't let anything else be done
   lock = db.Column(db.Boolean)
 
+  def __init__(self,name,region='eu-west-1',ARN='',creation_date=None,inv=None,nofiles=0,size=0,lock=False):
+    self.name = name
+    self.region = region
+    self.ARN = ARN
+    if creation_date is None:
+      creation_date = datetime.utcnow()
+    self.creation_date = creation_date
+    self.last_inventory_date = inv
+    self.no_of_archives = nofiles
+    self.size = size
+    self.lock = lock
+
+  def __repr__(self):
+    return '<Vault %r>' % self.name
+
+  @property
+  def human_size(self):
+    return human_readable(self.size)
+
   def get_inventory_jobs(self):
     """
     If there is any outstanding inventory retrieval job, return it.  Otherwise return the
@@ -238,20 +270,5 @@ class Vault(db.Model):
       return done
     #If all live inventory jobs failed...
     return None
-
-  def __init__(self,name,region='eu-west-1',ARN='',creation_date=None,inv=None,nofiles=0,size=0,lock=False):
-    self.name = name
-    self.region = region
-    self.ARN = ARN
-    if creation_date is None:
-      creation_date = datetime.utcnow()
-    self.creation_date = creation_date
-    self.last_inventory_dat = inv
-    self.no_of_archives = nofiles
-    self.size = size
-    self.lock = lock
-
-  def __repr__(self):
-    return '<Vault %r>' % self.name
 
 

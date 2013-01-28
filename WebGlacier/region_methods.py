@@ -2,7 +2,7 @@ from flask import request, session
 from flask import abort, redirect, url_for
 
 from WebGlacier import app, handlers, db
-from WebGlacier.utils import get_handler,process_vault
+from WebGlacier.lib.db import get_handler,process_vault
 from models import Vault
 
 @app.route("/glacier/action/setregion",methods=["GET"])
@@ -56,5 +56,3 @@ def get_vaults():
   for vault in vaults["VaultList"]:
     tmp=process_vault(vault)
   return redirect(url_for("main"))
-
-
