@@ -31,7 +31,7 @@ def check_job_status(vault_name):
       job.live=False
       db.session.add(job)
       db.session.commit()
-  return redirect(url_for('main'))
+  return redirect(request.referrer)
  
 @app.route("/glacier/<vault_name>/action/addfile",methods=["POST"])
 def upload_file(vault_name):
@@ -50,7 +50,7 @@ def upload_file(vault_name):
     print "Server has accepted payload"
     archive = upload_archive(tmp.name,vault,true_path=file.filename)
     os.remove(tmp.name)
-    return redirect(url_for('main'))
+    return redirect(request.referrer)
 
 @app.route("/glacier/<vault_name>/action/runjobs",methods=["GET"])
 def run_jobs(vault_name):
@@ -83,7 +83,7 @@ def run_jobs(vault_name):
     vault.lock=False
     db.session.add(vault)
     db.session.commit()
-  return redirect(url_for('main'))
+  return redirect(request.referrer)
  
 @app.route("/glacier/<vault_name>/action/getinventory",methods=["GET"])
 def get_inventory(vault_name):
@@ -109,7 +109,7 @@ def get_inventory(vault_name):
   db.session.commit()
   #Add the job to the database
   job=process_job(handler.describe_job(vault.name,job_id["JobId"]),vault)
-  return redirect(url_for('main'))
+  return redirect(request.referrer)
 
 @app.route("/glacier/<vault_name>/action/getarchive",methods=["GET"])
 def request_archive(vault_name):
@@ -134,7 +134,7 @@ def request_archive(vault_name):
     "ArchiveId":archive.archive_id}
   job_id = handler.initiate_job(vault.name, def_opts)
   job=process_job(handler.describe_job(vault.name,job_id["JobId"]),vault)
-  return redirect(url_for('main'))
+  return redirect(request.referrer)
 
 @app.route("/glacier/<vault_name>/action/deletearchive",methods=["GET"])
 def delete_archive(vault_name):
@@ -162,7 +162,7 @@ def delete_archive(vault_name):
     db.session.delete(job)
   db.session.delete(archive)
   db.session.commit()
-  return redirect(url_for('main'))
+  return redirect(request.referrer)
 
 @app.route("/glacier/<vault_name>/action/download",methods=["GET"])
 def dload_archive(vault_name):

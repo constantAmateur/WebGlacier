@@ -4,46 +4,48 @@
 {% block body %}
   <h1> Vaults in region {{rnom}} </h1>
   {# <a href='action/getvaults'>Get vaults from server</a> #}
-  <table>
+  <div id="header_options">
+    <table>
+      <tr>
+        <td>
+    <div id="RegionSelect">
+      <form action='action/setregion' id='region_select'>
+        <b>Region:</b>
+      </td>
+      <td>
+        <select name='region_select'>
+          {% for region in regions %}
+            {% if region==rnom %}
+              <option value="{{region}}" selected='selected'>{{region}}</option>
+            {% else %}
+              <option value="{{region}}">{{region}}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </td>
+      <td>
+        <input type='submit' value='Select'>
+      </td>
+      </form>
+    </div>
+    </tr>
     <tr>
       <td>
-  <div id="RegionSelect">
-    <form action='action/setregion' id='region_select'>
-      <b>Region:</b>
-    </td>
-    <td>
-      <select name='region_select'>
-        {% for region in regions %}
-          {% if region==rnom %}
-            <option value="{{region}}" selected='selected'>{{region}}</option>
-          {% else %}
-            <option value="{{region}}">{{region}}</option>
-          {% endif %}
-        {% endfor %}
-      </select>
-    </td>
-    <td>
-      <input type='submit' value='Select'>
-    </td>
-    </form>
+        <div id="VaultCreate">
+          <form action='action/createvault' id='create_vault'>
+          <b>Add Vault:</b>
+      </td>
+      <td>
+        <input type='text' name='name'>
+      </td>
+      <td>
+        <input type='submit' value="Create">
+      </td>
+      </form>
+    </div>
+    </tr>
+    </table>
   </div>
-  </tr>
-  <tr>
-    <td>
-      <div id="VaultCreate">
-        <form action='action/createvault' id='create_vault'>
-        <b>Add Vault:</b>
-    </td>
-    <td>
-      <input type='text' name='name'>
-    </td>
-    <td>
-      <input type='submit' value="Create">
-    </td>
-    </form>
-  </div>
-  </tr>
-</table>
 
   {{ list_vaults(vaults) }}
 {% endblock %}

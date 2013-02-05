@@ -3,42 +3,44 @@
 {% block title %} {{vault.name}} {% endblock %}
 {% block body %}
   <h1> {{ vault.name }}</h1>
-  <table>
-    <tr>
-      <form action="/glacier/" id="vault_select">
-      <td><b>Change Vault: </b></td>
-      <td>      
-        <select name='vault_select'>
-        {% for altvault in altvaults %}
-          {% if altvault.name==vault.name %}
-            <option value="{{altvault.name}}" selected='selected'>{{altvault.name}}</option>
-          {% else %}
-            <option value="{{altvault.name}}">{{altvault.name}}</option>
-          {% endif %}
-        {% endfor %}
-        </select>
-      </td>
-      <td>
-        <input type='submit' value='Change'>
-      </td>
-      </form>
-    </tr>
-  {% if not vault.lock %}
-    <tr>
-      <form action="action/addfile" method=post enctype=multipart/form-data>
-      <td><b>Add Archive: </b></td>
-      <td><input type=file name=file></td>
-      <td><input type=submit value=Upload></td>
-      </form>
-    </tr>
-  {% endif %}
-  </table>
-  {#{% if vault.lock %}
-    <h1><em> VAULT LOCKED! </em></h1>
-    No archives can be added or removed until inventory job has completed.
-  {% else %}
-    <h3> <a href="action/getinventory">Load archive data from server</a></h3>
-    {% endif %}#}
+  <div id="header_options">
+    <table>
+      <tr>
+        <form action="/glacier/" id="vault_select">
+        <td><b>Change Vault: </b></td>
+        <td>      
+          <select name='vault_select'>
+          {% for altvault in altvaults %}
+            {% if altvault.name==vault.name %}
+              <option value="{{altvault.name}}" selected='selected'>{{altvault.name}}</option>
+            {% else %}
+              <option value="{{altvault.name}}">{{altvault.name}}</option>
+            {% endif %}
+          {% endfor %}
+          </select>
+        </td>
+        <td>
+          <input type='submit' value='Change'>
+        </td>
+        </form>
+      </tr>
+    {% if not vault.lock %}
+      <tr>
+        <form action="action/addfile" method=post enctype=multipart/form-data>
+        <td><b>Add Archive: </b></td>
+        <td><input type=file name=file></td>
+        <td><input type=submit value=Upload></td>
+        </form>
+      </tr>
+    {% endif %}
+    </table>
+    {#{% if vault.lock %}
+      <h1><em> VAULT LOCKED! </em></h1>
+      No archives can be added or removed until inventory job has completed.
+    {% else %}
+      <h3> <a href="action/getinventory">Load archive data from server</a></h3>
+      {% endif %}#}
+  </div>
 
   {{ list_vault_contents(vault) }}
 {% endblock %}

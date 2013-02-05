@@ -1,4 +1,126 @@
-table
-{
-table-layout:fixed;
+h1 {
+  text-align: left;
+  font-size: 19px;
+  line-height: 20px;
+  font-weight: 400;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #4e4e4e;
 }
+h1 a {
+  text-decoration:none;
+}
+
+h2 {
+  font-size:18px;
+  font-weight:700;
+}
+
+body {
+  color: #000;
+  font-family: 'Verdana', 'Helvetica', 'Sans-serif', 'sans';
+  font-size: 12px;
+}
+
+#header{
+  width: 100%;
+  text-align: center;
+  padding-bottom: 30px;
+  color: #4e4e4e;
+  line-height: 1.4em;
+}
+#mainMenu{
+  background-color: #57442B;
+  color: #F5F5F5;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  float: left;
+  line-height: 1em;
+  list-style: none;
+  font-size: 13px;
+}
+
+#mainMenu li{
+  background: #57442B;
+  float: left;
+  position: relative;
+}
+#mainMenu a, #mainMenu a:visited {
+  color: #F5F5F5;
+  border-right: 1px solid #ccc;
+  padding: .75em 1em;
+  text-decoration: none;
+  display: block;
+  position: relative;
+}
+#mainMenu li a {
+  text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+}
+
+#header_options{
+  background-color: #efefef;
+  padding: 10px;
+  border: 1px solid #DFDEDE;
+  margin: 10px;
+}
+
+#footer{
+  width: 100%;
+  text-align: center;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-top: 1px solid #b3b3b3;
+  color: #4e4e4e;
+  line-height: 1.4em;
+}
+
+.archiveTable, .jobTable, .vaultTable {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.archiveTable th , .jobTable th, .vaultTable th{
+    padding: 3px;
+    font-weight: 700;
+    background-color: #333;
+    color: #FFF;
+    text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+}
+
+tr.archived{
+  background-color: #BEDEED;
+  padding: 2px;
+}
+
+tr.cached{
+  background-color: #C3E3C8;
+  padding: 2px;
+}
+
+tr.pending{
+  background-color: #FFDA8A;
+  padding: 2px;
+}
+
+tr.complete{
+  background-color: #FFB0B0;
+  padding: 2px;
+}
+
+tr.failed{
+  background-color: rgb(255,3,3);
+  padding: 2px;
+}
+
+tr.even{
+  background-color: #DEDEDE;
+  color: #000000;
+}
+
+tr.odd{
+  background-color: #A7A7A7;
+  color: #000000;
+}
+

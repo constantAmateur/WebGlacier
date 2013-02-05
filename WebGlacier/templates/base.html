@@ -3,23 +3,29 @@
 <head>
   {% block head %}
   <title>{% block title%}{% endblock %} - WebGlacier</title>
-    <link rel='stylesheet' type='text/css' href='../static/css.css' />
+    <link rel='stylesheet' type='text/css' href='/static/css.css' />
   {% endblock %}
 </head>
 <body>
   <div id="header">
     {% block header %}
-    <a href="/glacier/">Home</a>
-    <a href="/glacier/settings/">Settings</a>
+      <ul id="mainMenu">
+        <li>
+          <a href="/glacier/">Home</a>
+        </li>
+        <li>
+          <a href="/glacier/settings/">Settings</a>
+        </li>
+      </ul>
     {% endblock %}
   </div>
   <div id="content">
     {% block body %}
     {% endblock %}
   </div>
-  <div id='footer'>
+  <div id="footer">
     {% block footer %}
-    &copy; Copyright 2013 by <a href="http://example.com/">Matthew Young</a>.
+    &copy; Copyright 2013 by <a href="https://github.com/constantAmateur/WebGlacier/">Matthew Young</a>.
     {% endblock %}
   </div>
 </body>
