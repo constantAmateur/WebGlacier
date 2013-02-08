@@ -1,0 +1,2 @@
+recursive-include WebGlacier/templates *
+recursive-include WebGlacier/static *

@@ -8,7 +8,23 @@ app = Flask(__name__)
 app.config.from_pyfile("settings.cfg")
 app.config.from_envvar("GLACIER_CONFIG",silent=True)
 if "SQLALCHEMY_DATABASE_URI" not in app.config:
-  app.config['SQLALCHEMY_DATABASE_URI'] = app.config["SQL_TYPE"]+"://"+app.config["SQL_USERNAME"]+":"+app.config["SQL_PASSWORD"]+"@"+app.config["SQL_HOSTNAME"]+'/'+app.config["SQL_DATABASE_NAME"]
+  if app.config["SQL_TYPE"]=='sqlite':
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////"
+  else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQL_TYPE"]+"://"
+  extra_slash=False
+  if app.config["SQL_USERNAME"]!='' and app.config["SQL_PASSWORD"]!='':
+    extra_slash=True
+    app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+app.config["SQL_USERNAME"]+":"+app.config["SQL_PASSWORD"]+"@"
+  if app.config["SQL_HOSTNAME"]!='':
+    extra_slash=True
+    app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+app.config["SQL_HOSTNAME"]
+    if app.config["SQL_PORT"]!='':
+      app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+":"+app.config["SQL_PORT"]
+  if extra_slash:
+    app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+'/'
+  app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+app.config["SQL_DATABASE_NAME"]
+  #app.config['SQLALCHEMY_DATABASE_URI'] = app.config["SQL_TYPE"]+"://"+app.config["SQL_USERNAME"]+":"+app.config["SQL_PASSWORD"]+"@"+app.config["SQL_HOSTNAME"]+'/'+app.config["SQL_DATABASE_NAME"]
 #Make a dictionary of handlers for the amazon servers
 handlers = dict()
 for region in glacier.regions():
@@ -16,6 +32,8 @@ for region in glacier.regions():
 
 #Make the database handler
 db = SQLAlchemy(app)
+#Create the tables if needed
+db.create_all()
 
 #Import views
 import WebGlacier.views

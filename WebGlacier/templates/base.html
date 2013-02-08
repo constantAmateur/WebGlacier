@@ -4,21 +4,34 @@
   {% block head %}
   <title>{% block title%}{% endblock %} - WebGlacier</title>
     <link rel='stylesheet' type='text/css' href='/static/css.css' />
+    {#<link rel='stylesheet' type='text/css' href='/static/menu_assets/styles.css' />#}
+    <link rel='stylesheet' type='text/css' href='/static/cssmenu/menu_assets/styles.css' />
   {% endblock %}
 </head>
 <body>
-  <div id="header">
     {% block header %}
-      <ul id="mainMenu">
+    <div id='cssmenu'>
+        <ul>
+          <li ><a href="/glacier/"><span>Home</span></a></li>
+          <li><a href="/glacier/settings/"><span>Settings</span></a></li>
+        </ul>
+      </div>
+
+    {#<div id='cssmenu'>
+        <ul>
+          <li ><a href="/glacier/"><span>Home</span></a></li>
+          <li><a href="/glacier/settings/"><span>Settings</span></a></li>
+        </ul>
+      </div>#}
+      {#<ul id="mainMenu">
         <li>
           <a href="/glacier/">Home</a>
         </li>
         <li>
           <a href="/glacier/settings/">Settings</a>
         </li>
-      </ul>
+      </ul>#}
     {% endblock %}
-  </div>
   <div id="content">
     {% block body %}
     {% endblock %}

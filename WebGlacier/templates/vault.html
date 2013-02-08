@@ -2,7 +2,18 @@
 {% extends "base.html" %}
 {% block title %} {{vault.name}} {% endblock %}
 {% block body %}
-  <h1> {{ vault.name }}</h1>
+<h1> {{ vault.name }} </h1>
+  <div class='nav'>
+      {% if vault.lock %}
+        <img src="/static/icons/PNG/dark/24px/24_lock.png" alt="Vault Locked" height="24" width="24">
+      {% else %}
+        {% if inv_job != None %}
+          <a href="{{ inv_job }}" title="Force populate from completed job" class='inventory-link'>Populate</a>
+        {% else %}
+          <a href="action/getinventory" title="Populate from glacier" class='inventory-link'>Request</a>
+        {% endif %}
+      {% endif %}
+  </div>
   <div id="header_options">
     <table>
       <tr>
@@ -20,7 +31,9 @@
           </select>
         </td>
         <td>
-          <input type='submit' value='Change'>
+          <button type='submit' title="Change" class="change-link">
+            Change
+          </button>
         </td>
         </form>
       </tr>
@@ -29,7 +42,11 @@
         <form action="action/addfile" method=post enctype=multipart/form-data>
         <td><b>Add Archive: </b></td>
         <td><input type=file name=file></td>
-        <td><input type=submit value=Upload></td>
+        <td>
+          <button type='submit' title="Upload" class="upload-link">
+            Upload
+          </button>
+        </td>
         </form>
       </tr>
     {% endif %}

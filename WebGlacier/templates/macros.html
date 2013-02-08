@@ -25,9 +25,9 @@
     <td align='center'> {{vault.last_inventory_date}} </td>
     <td align='center'> 
       {% if not vault.lock %}
-        <a href="action/deletevault?name={{vault.name}}">D</a> 
+        <a href="action/deletevault?name={{vault.name}}" class='delete-link' title="Delete">Delete</a> 
       {% else %}
-        L
+        <img src="/static/icons/PNG/dark/16px/16_lock.png" alt="Vault Locked" height="16" width="16">
       {% endif %}
     </td>
   </tr>
@@ -86,19 +86,19 @@
     <td align='center'> {{ archive.insertion_date }} </td>
     <td align='center'>
       {% if archive.is_cached() %}
-        <a href="action/download?archive_id={{archive.archive_id}}">Download</a>
+        <a href="action/download?archive_id={{archive.archive_id}}" class="download-link" title="Download (Cache)">Download</a>
       {% else %}
         {% if live==None %}
-          <a href="action/getarchive?archive_id={{archive.archive_id}}">Request Data</a>
+          <a href="action/getarchive?archive_id={{archive.archive_id}}" class='request-link' title="Request Retrieval">Request Data</a>
         {% elif not live[0].completed %}
           Please wait...
         {% else %}
-          <a href="action/download?archive_id={{archive.archive_id}}">Download</a>
+          <a href="action/download?archive_id={{archive.archive_id}}" class='download-link' title="Download (Glacier)">Download</a>
         {% endif %}
       {% endif %}
     </td>
     {% if not lock %}
-      <td align='center'> <a href="action/deletearchive?archive_id={{archive.archive_id}}">Delete</a> </td>
+      <td align='center'> <a href="action/deletearchive?archive_id={{archive.archive_id}}" class='delete-link' title="Delete">Delete</a> </td>
     {% endif %}
   </tr>
 </div>

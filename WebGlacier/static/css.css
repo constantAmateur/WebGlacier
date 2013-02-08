@@ -124,3 +124,81 @@ tr.odd{
   color: #000000;
 }
 
+.nav {
+  position: absolute;
+  margin-top: -3.2em;
+  margin-left: 97.5%
+}
+
+/*Different link and form submit icons */
+.download-link {
+  background-image:url(/static/icons/PNG/dark/24px/24_download.png);
+  display:block;
+  height:24px;
+  width:24px;
+  text-indent:-9999px;
+}
+
+.delete-link {
+  background-image:url(/static/icons/PNG/dark/24px/24_trash.png);
+  display:block;
+  height:24px;
+  width:24px;
+  text-indent:-9999px;
+}
+
+.request-link {
+  background-image:url(/static/icons/PNG/dark/24px/24_cart.png);
+  display:block;
+  height:24px;
+  width:24px;
+  text-indent:-9999px;
+}
+
+.inventory-link {
+  background-image:url(/static/icons/PNG/dark/24px/24_catalogue.png);
+  display:block;
+  height:24px;
+  width:24px;
+  text-indent:-9999px;
+}
+
+
+.change-link {
+/*  background: transparent url(/static/icons/PNG/dark/24px/24_server.png) no-repeat center top;
+  display:block;
+  height:24px;
+  width:24px;
+  margin:0;
+  padding:0;
+  border:0;
+  cursor: pointer;
+  cursor: hand;
+  text-indent:-9999px;*/
+}
+
+.upload-link {
+  /*background: transparent url(/static/icons/PNG/dark/24px/24_upload.png) no-repeat center top;
+  display:block;
+  height:24px;
+  width:24px;
+  margin:0;
+  padding:0;
+  border:0;
+  cursor: pointer;
+  cursor: hand;
+  text-indent:-9999px;*/
+}
+
+.create-link {
+  /*background: transparent url(/static/icons/PNG/dark/24px/24_upload.png) no-repeat center top;
+  display:block;
+  height:24px;
+  width:24px;
+  margin:0;
+  padding:0;
+  border:0;
+  cursor: pointer;
+  cursor: hand;
+  text-indent:-9999px;*/
+}

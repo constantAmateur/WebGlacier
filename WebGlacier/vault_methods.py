@@ -83,7 +83,8 @@ def run_jobs(vault_name):
     vault.lock=False
     db.session.add(vault)
     db.session.commit()
-  return redirect(request.referrer)
+  #return redirect(request.referrer)
+  return redirect("/glacier/"+vault.name)
  
 @app.route("/glacier/<vault_name>/action/getinventory",methods=["GET"])
 def get_inventory(vault_name):

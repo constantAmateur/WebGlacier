@@ -29,7 +29,14 @@ def vault_view(vault_name):
       db.session.add(vault)
       db.session.commit()
   altvaults=Vault.query.filter_by(region=vault.region).all()
-  return render_template("vault.html",vault=vault,altvaults=altvaults)
+  #Get any completed jobs
+  live=vault.get_inventory_jobs()
+  #Unlock if we have no live inventory jobs left, or the only live jobs left have completed
+  if live is not None and live[0].completed and live[0].status_code=="Succeeded":
+    inv_job=url_for('run_jobs',vault_name=vault_name,job_id=live[0].job_id)
+  else:
+    inv_job=None
+  return render_template("vault.html",vault=vault,altvaults=altvaults,inv_job=inv_job)
 
 @app.route("/glacier/settings/",methods=["GET","POST"])
 def settings():
@@ -86,6 +93,12 @@ def save_settings(d):
   if d['sql_hostname']:
     tmp=d['sql_hostname']
     dat=re.sub("(^|\n)SQL_HOSTNAME( |=).*","\\1SQL_HOSTNAME = '"+str(tmp)+"'",dat)
+  #SQL port
+  try:
+    tmp=int(d['sql_port'])
+    dat=re.sub("(^|\n)SQL_PORT ( |=).*","\\1SQL_PORT = '"+str(tmp)+"'",dat)
+  except ValueError:
+    pass
   #SQL Db Name
   if d['sql_database_name']!='':
     tmp=d['sql_database_name']
