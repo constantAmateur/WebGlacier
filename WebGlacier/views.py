@@ -55,19 +55,20 @@ def vault_view(vault_name):
 def settings():
   form=SettingsForm(**app.config)
   if form.validate_on_submit():
-    save_settings(form.data)
+    cfile=os.path.join(WebGlacier.__path__[0],"settings.cfg")
+    save_settings(form.data,cfile)
     app.config.from_pyfile("settings.cfg")
     app.config.from_envvar("GLACIER_CONFIG",silent=True)
     return redirect(url_for('settings'))
   rnom=get_set_region()
   return render_template("settings.html",config=app.config,regions=handlers.keys(),rnom=rnom,form=form)
 
-def save_settings(data):
+def save_settings(data,cfile):
   #Options that if empty, don't change
   empty_no_change=["SQL_PASSWORD"]
   no_quote=["DEBUG","APP_HOST","SQLALCHEMY_POOL_RECYCLE","CHUNK_SIZE","","SQL_PORT","LOCAL_CACHE_SIZE","LOCAL_CACHE_MAX_FILE_SIZE"]
   #First get the file name of the current settings file
-  nome=os.environ.get("GLACIER_CONFIG","settings.cfg")
+  nome=os.environ.get("GLACIER_CONFIG",cfile)
   dat=open(nome,'r').read()
   #Save either the current setting, or the new one if validated
   for conf in data.keys():
