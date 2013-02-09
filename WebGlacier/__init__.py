@@ -8,10 +8,14 @@ app = Flask(__name__)
 app.config.from_pyfile("settings.cfg")
 app.config.from_envvar("GLACIER_CONFIG",silent=True)
 if "SQLALCHEMY_DATABASE_URI" not in app.config:
-  if app.config["SQL_TYPE"]=='sqlite':
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////"
+  app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQL_DIALECT"]
+  if app.config["SQL_DRIVER"]!="":
+    app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+"+"+app.config["SQL_DRIVER"]
+  if app.config["SQL_DIALECT"]=="sqlite":
+    tmp=":////"
   else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQL_TYPE"]+"://"
+    tmp="://"
+  app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+tmp
   extra_slash=False
   if app.config["SQL_USERNAME"]!='' and app.config["SQL_PASSWORD"]!='':
     extra_slash=True
@@ -19,12 +23,13 @@ if "SQLALCHEMY_DATABASE_URI" not in app.config:
   if app.config["SQL_HOSTNAME"]!='':
     extra_slash=True
     app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+app.config["SQL_HOSTNAME"]
-    if app.config["SQL_PORT"]!='':
+    if app.config["SQL_PORT"] is not None:
       app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+":"+app.config["SQL_PORT"]
   if extra_slash:
     app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+'/'
   app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"]+app.config["SQL_DATABASE_NAME"]
   #app.config['SQLALCHEMY_DATABASE_URI'] = app.config["SQL_TYPE"]+"://"+app.config["SQL_USERNAME"]+":"+app.config["SQL_PASSWORD"]+"@"+app.config["SQL_HOSTNAME"]+'/'+app.config["SQL_DATABASE_NAME"]
+#print app.config["SQLALCHEMY_DATABASE_URI"]
 #Make a dictionary of handlers for the amazon servers
 handlers = dict()
 for region in glacier.regions():

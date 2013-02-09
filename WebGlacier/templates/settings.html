@@ -2,111 +2,236 @@
 {% block title %} Settings {% endblock %}
 {% block body %}
 <h1> Settings </h1>
-<form action="/glacier/settings/" method=post>
+<form action="/glacier/settings/" method='post' name="settings">
+  {{form.hidden_tag()}}
   <h2> Database Settings </h2>
-  <table>
+    {% for error in form.errors['meta_sql'] %}
+      <span class='error'>[{{error}}]</span>
+    {% endfor %}
+    <table>
     <tr>
-      <td><b>SQL Type:</b></td>
+      <td><b>SQL Dialect:</b></td>
       <td>
-        <select name='sql_type'>
-          <option value="MYSQL" selected>MySQL</option>
-        </select>
+        {{form.SQL_DIALECT()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_DIALECT %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>SQL Database:</b></td>
+      <td>
+        {{form.SQL_DATABASE_NAME()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_DATABASE_NAME %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>SQL Hostname:</b></td>
+      <td>
+        {{form.SQL_HOSTNAME()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_HOSTNAME %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
       </td>
     </tr>
     <tr>
       <td><b>SQL Username:</b></td>
-      <td><input type='text' name='sql_username' value={{config["SQL_USERNAME"]}}></td>
+      <td>
+        {{form.SQL_USERNAME()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_USERNAME %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
     <tr>
       <td><b>SQL Password:</b></td>
-      <td><input type='password' name='sql_password'></td>
+      <td>
+        {{form.SQL_PASSWORD()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_PASSWORD %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
-    <tr>
-      <td><b>SQL Hostname:</b></td>
-      <td><input type='text' name="sql_hostname" value={{config["SQL_HOSTNAME"]}}></td>
-    </tr>
-    <tr>
-      <td><b>SQL Port Number:</b></td>
-      <td><input type='text' name="sql_port" value={{config["SQL_PORT"]}}></td>
-    </tr>
- 
-    <tr>
-      <td><b>SQL Database:</b></td>
-      <td><input type='text' name="sql_database_name" value={{config["SQL_DATABASE_NAME"]}}></td>
+     <tr>
+      <td><b>SQL Port:</b></td>
+      <td>
+        {{form.SQL_PORT()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_PORT %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
   </table>
   <h2> Amazon Settings </h2>
-  <table>
+    {% for error in form.errors['meta_amazon'] %}
+      <span class='error'>[{{error}}]</span>
+    {% endfor %}
+    <table>
     <tr>
       <td><b>Default Region:</b></td>
       <td>
-        <select name='default_region'>
-          {% for region in regions %}
-            {% if region==rnom %}
-              <option value="{{region}}" selected='selected'>{{region}}</option>
-            {% else %}
-              <option value="{{region}}">{{region}}</option>
-            {% endif %}
-          {% endfor %}
-        </select>
+        {{form.DEFAULT_REGION()}}
+      </td>
+      <td>
+        {% for error in form.errors.DEFAULT_REGION %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
       </td>
     </tr>
     <tr>
       <td><b>AWS Access Key:</b></td>
-      <td><input type='text' name='aws_access_key' value={{config["AWS_ACCESS_KEY"]}}></td>
+      <td>
+        {{form.AWS_ACCESS_KEY()}}
+      </td>
+      <td>
+        {% for error in form.errors.AWS_ACCESS_KEY %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
     <tr>
       <td><b>AWS Secret Access Key:</b></td>
-      <td><input type='text' name='aws_secret_access_key' value={{config["AWS_SECRET_ACCESS_KEY"]}}></td>
-    </tr>
-    <tr>
-      <td><b>Chunk Size:</b></td>
-      <td><input type='text' name="chunk_size" value={{config["CHUNK_SIZE"]}}></td>
+      <td>
+        {{form.AWS_SECRET_ACCESS_KEY()}}
+      </td>
+      <td>
+        {% for error in form.errors.AWS_SECRET_ACCESS_KEY %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
   </table>
   <h2> Web Glacier Settings </h2>
   <table>
     <tr>
-      <td><b>Temporary Folder:</b></td>
-      <td><input type='text' name="temp_folder" value={{config["TEMP_FOLDER"]}}></td>
-    </tr>
-    <tr>
-      <td><b>Unknown File Name:</b></td>
-      <td><input type='text' name="unknown_filename" value={{config["UNKNOWN_FILENAME"]}}></td>
+      <td><b>Temporary Directory:</b></td>
+      <td>
+        {{form.TEMP_FOLDER()}}
+      </td>
+      <td>
+        {% for error in form.errors.TEMP_FOLDER %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
     <tr>
       <td><b>Cache Directory:</b></td>
-      <td><input type='text' name="local_cache" value={{config["LOCAL_CACHE"]}}></td>
+      <td>
+        {{form.LOCAL_CACHE()}}
+      </td>
+      <td>
+        {% for error in form.errors.LOCAL_CACHE %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
     <tr>
       <td><b>Cache Size(bytes):</b></td>
-      <td><input type='text' name="local_cache_size" value={{config["LOCAL_CACHE_SIZE"]}}></td>
+      <td>
+        {{form.LOCAL_CACHE_SIZE()}}
+      </td>
+      <td>
+        {% for error in form.errors.LOCAL_CACHE_SIZE %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
     <tr>
       <td><b>Max Cache File Size(bytes):</b></td>
-      <td><input type='text' name="local_cache_max_file_size" value={{config["LOCAL_CACHE_MAX_FILE_SIZE"]}}></td>
+      <td>
+        {{form.LOCAL_CACHE_MAX_FILE_SIZE()}}
+      </td>
+      <td>
+        {% for error in form.errors.LOCAL_CACHE_MAX_FILE_SIZE %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>File Name For Unknown Files:</b></td>
+      <td>
+        {{form.UNKNOWN_FILENAME()}}
+      </td>
+      <td>
+        {% for error in form.errors.UNKNOWN_FILENAME %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
   </table>
-  <h2> Nerdy Settings for Nerds </h2>
+  <h2> Nerdy settings for nerds </h2>
   <table>
     <tr>
       <td><b>Debug:</b></td>
-      <td><input type='checkbox' name="debug" value='true' {% if config["DEBUG"] %} checked {% endif %} ></td>
+      <td>
+        {{form.DEBUG()}}
+      </td>
+      <td>
+        {% for error in form.errors.DEBUG %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
     <tr>
       <td><b>Application Host:</b></td>
-      <td><input type='text' name='app_host' value={{config["APP_HOST"]}}></td>
+      <td>
+        {{form.APP_HOST()}}
+      </td>
+      <td>
+        {% for error in form.errors.APP_HOST %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
-    {#<tr>
-      <td><b>Secret Key:</b></td>
-      <td><input type='text' name='secret_key'></td>
-    </tr>#}
     <tr>
       <td><b>SQL Alchemy Pool Recycle:</b></td>
-      <td><input type='text' name='sqlalchemy_pool_recycle' value={{config["SQLALCHEMY_POOL_RECYCLE"]}}></td>
+      <td>
+        {{form.SQLALCHEMY_POOL_RECYCLE()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQLALCHEMY_POOL_RECYCLE %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>Chunk Size For Transfer:</b></td>
+      <td>
+        {{form.CHUNK_SIZE()}}
+      </td>
+      <td>
+        {% for error in form.errors.CHUNK_SIZE %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>SQL Driver:</b></td>
+      <td>
+        {{form.SQL_DRIVER()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_DRIVER %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
     </tr>
   </table>
+
   <input type='submit' value="Save Changes">
 </form>
 {% endblock %}
- 
