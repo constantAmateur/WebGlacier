@@ -32,8 +32,6 @@ for region in glacier.regions():
 
 #Make the database handler
 db = SQLAlchemy(app)
-#Create the tables if needed
-db.create_all()
 
 #Import views
 import WebGlacier.views

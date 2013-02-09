@@ -1,9 +1,24 @@
 from flask import request, session
 from boto.glacier.concurrent import ConcurrentUploader
 import os
+from datetime import datetime
 
 from WebGlacier import app, handlers, db
 from WebGlacier.models import Vault,Archive,Job
+
+def str_to_dt(string):
+  """
+  Converts an amazon datetime string to a python localized datetime object
+  """
+  if string is None or string=='':
+    return None
+  try:
+    t=datetime.strptime(string,"%Y-%m-%dT%H:%M:%S.%fZ")
+    return t
+    #utc=pytz.UTC
+    #return utc.localize(t)
+  except ValueError:
+    return None
 
 def get_set_region():
   """
@@ -29,9 +44,9 @@ def process_vault(vault):
   #Add it if not
   if tmp is None:
     tmp=Vault(vault["VaultName"],vault["VaultARN"].split(":")[3])
-  tmp.creation_date = vault["CreationDate"]
+  tmp.creation_date = str_to_dt(vault["CreationDate"])
   tmp.ARN = vault['VaultARN']
-  tmp.last_inventory_date = vault["LastInventoryDate"]
+  tmp.last_inventory_date = str_to_dt(vault["LastInventoryDate"])
   tmp.no_of_archives=vault["NumberOfArchives"]
   tmp.size=vault["SizeInBytes"]
   db.session.add(tmp)
@@ -59,8 +74,8 @@ def process_job(job,vault):
     pass
   #Now add all the little extras we may have
   tmp.completed = job['Completed']
-  tmp.completion_date = job['CompletionDate']
-  tmp.creation_date = job['CreationDate']
+  tmp.completion_date = str_to_dt(job['CompletionDate'])
+  tmp.creation_date = str_to_dt(job['CreationDate'])
   tmp.inventory_size = job['InventorySizeInBytes']
   tmp.description = job['JobDescription']
   tmp.retrieval_range = job['RetrievalByteRange']
@@ -83,7 +98,7 @@ def process_archive(archive,vault):
     tmp = Archive(archive["ArchiveId"],archive["ArchiveDescription"],vault)
   #Now make everything what it should be...
   tmp.description = archive["ArchiveDescription"]
-  tmp.insertion_date = archive["CreationDate"]
+  tmp.insertion_date = str_to_dt(archive["CreationDate"])
   tmp.SHA256_tree_hash = archive["SHA256TreeHash"]
   tmp.filesize = archive["Size"]
   db.session.add(tmp)

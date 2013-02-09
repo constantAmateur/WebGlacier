@@ -10,7 +10,8 @@ setup(
       "Flask",
       "flask-sqlalchemy",
       "boto",
-      "mysql-python"
+      "mysql-python",
+      "distribute>=0.6.28",
       ],
     packages=find_packages()
     )

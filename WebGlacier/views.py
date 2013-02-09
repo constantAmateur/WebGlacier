@@ -31,11 +31,23 @@ def vault_view(vault_name):
   altvaults=Vault.query.filter_by(region=vault.region).all()
   #Get any completed jobs
   live=vault.get_inventory_jobs()
-  #Unlock if we have no live inventory jobs left, or the only live jobs left have completed
-  if live is not None and live[0].completed and live[0].status_code=="Succeeded":
-    inv_job=url_for('run_jobs',vault_name=vault_name,job_id=live[0].job_id)
-  else:
-    inv_job=None
+  #Check the lock status and set the complete job if available
+  inv_job=None
+  if live is not None:
+    for j in live:
+      if not j.completed:
+        #If there's an incomplete inventory job, make sure we're locked and finish
+        if not vault.lock:
+          vault.lock=True
+          db.session.add(vault)
+          db.session.commit()
+        inv_job=None
+        break
+      elif j.status_code=="Succeeded":
+        #There's at least one complete job
+        #They're sorted by date, so the first one is what we want if there are more than one
+        if inv_job is None:
+          inv_job=url_for('run_jobs',vault_name=vault_name,job_id=j.job_id)
   return render_template("vault.html",vault=vault,altvaults=altvaults,inv_job=inv_job)
 
 @app.route("/glacier/settings/",methods=["GET","POST"])
