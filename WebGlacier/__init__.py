@@ -2,6 +2,7 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from boto import glacier,connect_glacier
 from boto.glacier.layer1 import Layer1
+import socket
 
 app = Flask(__name__)
 #Configure the application
@@ -34,6 +35,12 @@ if "SQLALCHEMY_DATABASE_URI" not in app.config:
 handlers = dict()
 for region in glacier.regions():
   handlers[region.name]=Layer1(aws_access_key_id = app.config["AWS_ACCESS_KEY"], aws_secret_access_key = app.config["AWS_SECRET_ACCESS_KEY"],region_name=region.name)
+#Make a dictionary of queues of stuff that remotes need to do
+queues = dict()
+#Make a dictionary of clients
+live_clients = dict()
+#Global variable to hold the current client
+app.config['current_client'] = None
 
 #Make the database handler
 db = SQLAlchemy(app)

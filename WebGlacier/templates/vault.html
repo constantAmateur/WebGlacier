@@ -1,5 +1,9 @@
 {% from "macros.html" import list_vault_contents %}
 {% extends "base.html" %}
+{% block form_start %} 
+<form action="/glacier/baba" method="post">
+  <input type='hidden' name='vault_name' value='{{vault.name}}' />
+{% endblock %}
 {% block title %} {{vault.name}} {% endblock %}
 {% block body %}
 <h1> {{ vault.name }} </h1>
@@ -17,7 +21,6 @@
   <div id="header_options">
     <table>
       <tr>
-        <form action="/glacier/" id="vault_select">
         <td><b>Change Vault: </b></td>
         <td>      
           <select name='vault_select'>
@@ -31,14 +34,34 @@
           </select>
         </td>
         <td>
-          <button type='submit' title="Change" class="change-link">
+          <button type='submit' title="Change" class="change-link" name='vault_select_pressed' value="change_vault">
             Change
           </button>
         </td>
-        </form>
       </tr>
-    {% if not vault.lock %}
-      <tr>
+      {#<tr>
+        <form action="/glacier/set_client" method='post' id="client_set">
+        <td><b>Set Client: </b></td>
+        <td>      
+          <select name='client_set'>
+          {% for client in clients %}
+            {% if client==clients[0] %}
+              <option value="{{client}}" selected='selected'>{{client}}</option>
+            {% else %}
+              <option value="{{client}}">{{client}}</option>
+            {% endif %}
+          {% endfor %}
+          </select>
+        </td>
+        <td>
+          <button type='submit' title="Set" class="change-link">
+            Set
+          </button>
+        </td>
+        </form>
+      </tr>#}
+    {% if not vault.lock and clients %}
+    {#<tr>
         <form action="action/addfile" method=post enctype=multipart/form-data>
         <td><b>Add Archive: </b></td>
         <td><input type=file name=file></td>
@@ -48,6 +71,16 @@
           </button>
         </td>
         </form>
+      </tr>#}
+      <tr>
+          <td><b>Add Archive(s): </b></td>
+          <td><input type='text' name='upload_path'> </td>
+          <td><input type='text' name='upload_description' value="Description of file."> </td>
+          <td>
+            <button type='submit' title='Submit' class='upload-link' value='add_archive' name='upload_pressed'>
+              Upload
+            </button>
+          </td>
       </tr>
     {% endif %}
     </table>
@@ -59,5 +92,6 @@
       {% endif %}#}
   </div>
 
-  {{ list_vault_contents(vault) }}
+  {{ list_vault_contents(vault,clients) }}
+  </form>
 {% endblock %}

@@ -1,6 +1,7 @@
-from flask.ext.wtf import Form, TextField, BooleanField, PasswordField,IntegerField,SelectField
-from flask.ext.wtf import Required, Optional,IPAddress
-from flask.ext.wtf import ValidationError
+from flask.ext.wtf import Form
+from wtforms import TextField, BooleanField, PasswordField,IntegerField,SelectField, ValidationError
+from wtforms.validators import Required, Optional, IPAddress
+
 from WebGlacier import app,handlers
 from boto.glacier.layer1 import Layer1
 import os,sqlalchemy
@@ -46,18 +47,18 @@ class SettingsForm(Form):
   AWS_ACCESS_KEY = TextField(validators=[Required()])
   AWS_SECRET_ACCESS_KEY = TextField(validators=[Required()])
   #Web glacier settings
-  LOCAL_CACHE = TextField(validators=[Folder()])
-  LOCAL_CACHE_SIZE = IntegerField()
-  LOCAL_CACHE_MAX_FILE_SIZE = IntegerField()
-  TEMP_FOLDER = TextField(validators=[Required(),Folder()])
+  UCHUNK = IntegerField(validators=[Optional()])
+  DCHUNK = IntegerField(validators=[Optional()])
   UNKNOWN_FILENAME = TextField()
   #Nerd SETTINGS
   DEBUG = BooleanField()
   APP_HOST = TextField(validators=[Required(),IPAddress()])
-  CHUNK_SIZE = IntegerField(default=1048576,validators=[Required()])
   #SECRET_KEY = TextField()
   SQLALCHEMY_POOL_RECYCLE = IntegerField()
   SQL_DRIVER = TextField()
+  #Security settings
+  DISABLE_HTTPS = BooleanField()
+  DISABLE_AUTH = BooleanField()
 
   def validate(self):
     rv = Form.validate(self)

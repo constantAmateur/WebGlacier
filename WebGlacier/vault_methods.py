@@ -5,14 +5,81 @@ from werkzeug import secure_filename, Headers
 from tempfile import mkstemp
 import os
 import tempfile
+import time
  
 
 from WebGlacier import app,  db
-from WebGlacier.lib.db import get_set_region, get_handler, process_job, process_archive,upload_archive
+from WebGlacier import queues
+from WebGlacier.lib.db import get_set_region, get_handler, process_job, process_archive
 from models import Vault,Archive,Job
+
+def download_archive(vault_name,archive_id,client):
+  """
+  Puts a download job in the queue, after some minor validation.
+  """
+  print queues
+  region = get_set_region()
+  vault = Vault.query.filter_by(name=vault_name,region=region).first()
+  if vault is None:
+    abort(401)
+  #Need to get the archive too...
+  archive = Archive.query.filter_by(archive_id=archive_id).first()
+  if archive is None:
+    abort(401)
+  if archive.filename!="NOT_GIVEN":
+    fname=archive.filename
+  else:
+    fname=app.config["UNKNOWN_FILENAME"]
+  #Is there a finished job knocking about?
+  job=archive.jobs.filter_by(action='download',completed=True,live=True,status_message="Succeeded").first()
+  if job is None:
+    abort(401)
+  #Very well, stick a job in the queue
+  command = {}
+  command['action']='DOWNLOAD'
+  command['access_key']=app.config['AWS_ACCESS_KEY']
+  command['secret_access_key']=app.config["AWS_SECRET_ACCESS_KEY"]
+  command['region_name']=region
+  command['file_name']=fname
+  command['file_size']=job.archive.filesize
+  command['vault_name']=vault.name
+  command['job_id']=job.job_id
+  command['target']=request.remote_addr
+  k='d'+str(time.time())+"_"+str(os.urandom(16).encode('hex'))[:4]
+  if client not in queues:
+    queues[client]={}
+  queues[client][k] = command
+
+def upload_archive(vault_name,path,client,description=''):
+  """
+  Create an upload job after some minor validation.
+  """
+  region = get_set_region()
+  vault = Vault.query.filter_by(name=vault_name,region=region).first()
+  if vault is None:
+    abort(401)
+  if vault.lock:
+    abort(401)
+  command = {}
+  command['action']='UPLOAD'
+  command['access_key']=app.config['AWS_ACCESS_KEY']
+  command['secret_access_key']=app.config["AWS_SECRET_ACCESS_KEY"]
+  command['region_name']=region
+  command['vault_name']=vault.name
+  command['file_pattern']=path
+  command['target']=request.remote_addr
+  command['description']=description
+  k='u'+str(time.time())+"_"+str(os.urandom(16).encode('hex'))[:4]
+  if client not in queues:
+    queues[client]={}
+  queues[client][k]=command
+
 
 @app.route("/glacier/<vault_name>/action/checkjobstatus")
 def check_job_status(vault_name):
+  """
+  Pretty self explanatory isn't it?
+  """
   handler = get_handler()
   region = handler.region.name
   vault = Vault.query.filter_by(name=vault_name,region=region).first()
@@ -33,24 +100,44 @@ def check_job_status(vault_name):
       db.session.commit()
   return redirect(request.referrer)
  
-@app.route("/glacier/<vault_name>/action/addfile",methods=["POST"])
-def upload_file(vault_name):
-  region = get_set_region()
-  vault = Vault.query.filter_by(name=vault_name,region=region).first()
-  if vault is None:
-    abort(401)
-  if vault.lock:
-    abort(401)
-  file = request.files['file']
-  if file:
-    #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
-    tmp=tempfile.NamedTemporaryFile(dir=app.config["TEMP_FOLDER"],delete=False)
-    file.save(tmp)
-    tmp.close()
-    print "Server has accepted payload"
-    archive = upload_archive(tmp.name,vault,true_path=file.filename)
-    os.remove(tmp.name)
-    return redirect(request.referrer)
+#@app.route("/glacier/<vault_name>/action/addfile",methods=["POST"])
+#def upload_file(vault_name):
+#  region = get_set_region()
+#  vault = Vault.query.filter_by(name=vault_name,region=region).first()
+#  if vault is None:
+#    abort(401)
+#  if vault.lock:
+#    abort(401)
+#  if 'path' not in request.form:
+#    abort(401)
+#  #The path to upload is now in request.form['path'] (or it should be)
+#  if app.config['current_client'] not in queues:
+#    #Try and set the current_client to something sensible, if not return an error
+#    app.config['current_client']=queues.keys()[0]
+#    #queues[app.config['current_client']]={}
+#  command = {}
+#  command['action']='UPLOAD'
+#  command['access_key']=app.config['AWS_ACCESS_KEY']
+#  command['secret_access_key']=app.config["AWS_SECRET_ACCESS_KEY"]
+#  command['region_name']=region
+#  command['vault_name']=vault.name
+#  command['file_pattern']=request.form['path']
+#  command['target']=request.remote_addr
+#  command['description']='' if 'description' not in request.form else request.form['description']
+#  k='u'+str(time.time())+"_"+str(os.urandom(16).encode('hex'))[:4]
+#  queues[app.config['current_client']][k]=command
+#  return redirect(request.referrer)
+#  #file = request.files['file']
+#  #if file:
+#  #  #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
+#  #  tmp=tempfile.NamedTemporaryFile(dir=app.config["TEMP_FOLDER"],delete=False)
+#  #  file.save(tmp)
+#  #  tmp.close()
+#  #  print "Server has accepted payload"
+#  #  archive = upload_archive(tmp.name,vault,true_path=file.filename)
+#  #  os.remove(tmp.name)
+#  #  return redirect(request.referrer)
+
 
 @app.route("/glacier/<vault_name>/action/runjobs",methods=["GET"])
 def run_jobs(vault_name):
@@ -140,7 +227,7 @@ def request_archive(vault_name):
 @app.route("/glacier/<vault_name>/action/deletearchive",methods=["GET"])
 def delete_archive(vault_name):
   """
-  Asks glacier to get your data.  You'll have to wait for it to get back first...
+  Delete archive from glacier's servers
   """
   handler = get_handler()
   #Need to get the vault as always...
@@ -165,43 +252,66 @@ def delete_archive(vault_name):
   db.session.commit()
   return redirect(request.referrer)
 
-@app.route("/glacier/<vault_name>/action/download",methods=["GET"])
-def dload_archive(vault_name):
-  """
-  Asks glacier to get your data.  You'll have to wait for it to get back first...
-  """
-  region = get_set_region()
-  vault = Vault.query.filter_by(name=vault_name,region=region).first()
-  if vault is None:
-    abort(401)
-  #Need to get the archive too...
-  if 'archive_id' not in request.args:
-    abort(401)
-  archive = Archive.query.filter_by(archive_id=request.args['archive_id']).first()
-  if archive is None:
-    abort(401)
-  if archive.filename!="NOT_GIVEN":
-    fname=archive.filename
-  else:
-    fname=app.config["UNKNOWN_FILENAME"]
-  #Are we serving from cache?
-  cache = archive.cached()
-  if cache==1:
-    print "Serving from cache."
-    return send_from_directory(os.path.join(app.config["LOCAL_CACHE"],region,vault.name),archive.archive_id,attachment_filename=fname,as_attachment=True)
-  #Is there a finished job knocking about?
-  job=archive.jobs.filter_by(action='download',completed=True,live=True,status_message="Succeeded").first()
-  if job is None:
-    abort(401)
-  #OK, everything exists, go ahead...
-  if cache==2:
-    #Save to cache whilst serving
-    print "Adding to cache."
-    f = open(os.path.join(app.config["LOCAL_CACHE"],region,vault.name,archive.archive_id),'wb')
-  else:
-    #Don't add to cache, just serve
-    print "No cache, only serve."
-    f = None
-  h=Headers()
-  h.add("Content-Disposition",'attachment;filename="'+fname+'"')
-  return Response(stream_with_context(job.stream_output(file_handler=f)),headers=h)
+#@app.route("/glacier/<vault_name>/action/download",methods=["GET"])
+#def dload_archive(vault_name):
+#  """
+#  Asks glacier to get your data.  You'll have to wait for it to get back first...
+#  """
+#  region = get_set_region()
+#  vault = Vault.query.filter_by(name=vault_name,region=region).first()
+#  if vault is None:
+#    abort(401)
+#  #Need to get the archive too...
+#  if 'archive_id' not in request.args:
+#    abort(401)
+#  archive = Archive.query.filter_by(archive_id=request.args['archive_id']).first()
+#  if archive is None:
+#    abort(401)
+#  if archive.filename!="NOT_GIVEN":
+#    fname=archive.filename
+#  else:
+#    fname=app.config["UNKNOWN_FILENAME"]
+#  #Is there a finished job knocking about?
+#  job=archive.jobs.filter_by(action='download',completed=True,live=True,status_message="Succeeded").first()
+#  if job is None:
+#    abort(401)
+#  #OK, go ahead and send the download command
+#  if app.config['current_client'] not in queues:
+#    #Try and set the current_client to something sensible, if not return an error
+#    app.config['current_client']=queues.keys()[0]
+#    #queues[app.config['current_client']]={}
+#  command = {}
+#  command['action']='DOWNLOAD'
+#  command['access_key']=app.config['AWS_ACCESS_KEY']
+#  command['secret_access_key']=app.config["AWS_SECRET_ACCESS_KEY"]
+#  command['region_name']=region
+#  command['file_name']=fname
+#  command['file_size']=job.archive.filesize
+#  command['vault_name']=vault.name
+#  command['job_id']=job.job_id
+#  command['target']=request.remote_addr
+#  k='d'+str(time.time())+"_"+str(os.urandom(16).encode('hex'))[:4]
+#  queues[app.config['current_client']][k] = command
+#  print queues[app.config['current_client']]
+#  return redirect(request.referrer)
+#  #Are we serving from cache?
+#  #cache = archive.cached()
+#  #if cache==1:
+#  #  print "Serving from cache."
+#  #  return send_from_directory(os.path.join(app.config["LOCAL_CACHE"],region,vault.name),archive.archive_id,attachment_filename=fname,as_attachment=True)
+#  ##Is there a finished job knocking about?
+#  #job=archive.jobs.filter_by(action='download',completed=True,live=True,status_message="Succeeded").first()
+#  #if job is None:
+#  #  abort(401)
+#  ##OK, everything exists, go ahead...
+#  #if cache==2:
+#  #  #Save to cache whilst serving
+#  #  print "Adding to cache."
+#  #  f = open(os.path.join(app.config["LOCAL_CACHE"],region,vault.name,archive.archive_id),'wb')
+#  #else:
+#  #  #Don't add to cache, just serve
+#  #  print "No cache, only serve."
+#  #  f = None
+#  #h=Headers()
+#  #h.add("Content-Disposition",'attachment;filename="'+fname+'"')
+#  #return Response(stream_with_context(job.stream_output(file_handler=f,fname=fname)),headers=h)

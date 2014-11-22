@@ -22,6 +22,18 @@ body {
   font-size: 12px;
 }
 
+#cssmenu ul li span#clientSelect{
+  outline:none; 
+  display:block; 
+  position:relative; 
+  color:#fff;
+  padding:9px; 
+  font:bold 13px/100% Arial, Helvetica, sans-serif; 
+  text-align:center; 
+  text-decoration:none; 
+  text-shadow:1px 1px 0 rgba(0,0,0, 0.4);
+}
+
 #header{
   width: 100%;
   text-align: center;
@@ -127,7 +139,7 @@ tr.odd{
 .nav {
   position: absolute;
   margin-top: -3.2em;
-  margin-left: 97.5%
+  right: 10px;
 }
 
 .error{

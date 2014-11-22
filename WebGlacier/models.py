@@ -1,9 +1,12 @@
-from WebGlacier import db,app,handlers
+from WebGlacier import db,app,handlers,queues
 from WebGlacier.lib.misc import human_readable,ensure_path
+from datetime import datetime
+from flask import request
 from datetime import datetime
 import math
 import os
 import subprocess
+import re
 
 class Archive(db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -16,13 +19,17 @@ class Archive(db.Model):
   fullpath = db.Column(db.Text)
   filesize = db.Column(db.Integer)
   insertion_date = db.Column(db.DateTime)
+  md5sum = db.Column(db.Text)
   #The amazon crap
   SHA256_tree_hash = db.Column(db.String(256))
   #the backref thing gives vault instances the archives property, which can be used for cool shit like queries...
   vault = db.relationship("Vault",
     backref=db.backref("archives", lazy='dynamic'))
+  #A pattern to convert descriptions to other things
+  description_pattern = re.compile(r"(?P<main>.*?)\\nUploaded at (?P<utime>.*?)\\nFull path (?P<path>.*?)\\nFile size (?P<size>.*?)\\nMD5 (?P<md5>.*?)\\nSource machine id (?P<id>.*?)\\n")
 
-  def __init__(self,archive_id,description,vault,filename=None,filesize=None,fullpath=None,tree_hash=''):
+
+  def __init__(self,archive_id,description,vault,filename=None,filesize=None,fullpath=None,tree_hash='',md5sum=''):
     self.archive_id = archive_id
     self.description = description
     self.vault = vault
@@ -37,11 +44,38 @@ class Archive(db.Model):
     self.filesize=filesize
     insertion_date = datetime.utcnow()
     self.insertion_date = insertion_date
+    self.md5sum=md5sum
     self.SHA256_tree_hash = tree_hash
 
   @property
   def human_size(self):
     return human_readable(self.filesize)
+
+  @property
+  def short_description(self):
+    """
+    The description created by WebGlacier includes a bunch of metadata
+    which you don't usually want to display.  This will strip it out if it
+    exists.
+    """
+    me = self.description_pattern.match(self.description)
+    return me.group('main') if me else self.description
+
+  def populate_from_description(self):
+    """
+    If the description matches the pattern provided, we can use it to 
+    populate the different fields of the object.
+    """
+    me = self.description_pattern.match(self.description)
+    if me is None:
+      print "Description does not match expected pattern, cannot populate fields."
+    else:
+      self.insertion_date = datetime.fromtimestamp(int(float(me.group('utime'))))
+      self.fullpath = me.group('path')
+      self.filename = os.path.basename(me.group('path'))
+      self.filesize = int(me.group('size'))
+      self.md5sum = me.group('md5')
+      #If we start storing machine id, save it here...
 
   def cached(self):
     """
@@ -144,7 +178,7 @@ class Job(db.Model):
   #Whether the job still exists or not
   live = db.Column(db.Boolean)
 
-  def stream_output(self,chunk_size=None,file_handler=None):
+  def stream_output(self,chunk_size=None,file_handler=None,fname=None):
     """
     A generator that can be used to stream a download job from Amazon's
     servers without saving it locally.  Obviously the job must be live,
@@ -160,6 +194,7 @@ class Job(db.Model):
     to file.  The object will be closed after the last chunk has been processed.
     """
     handler = handlers[self.vault.region]
+    print self.vault.region
     if self.action!='download':
       raise TypeError("Can only stream download jobs")
     if not self.live or not self.completed:
@@ -170,6 +205,19 @@ class Job(db.Model):
     vault_name = self.vault.name
     job_id = self.job_id
     num_chunks = int(math.ceil(file_size / float(chunk_size)))
+    #Stick it where it needs to be...
+    if request.remote_addr not in queues:
+      queues[request.remote_addr]=[]
+    command = {}
+    command['action']='DOWNLOAD'
+    command['access_key']=app.config['AWS_ACCESS_KEY']
+    command['secret_access_key']=app.config["AWS_SECRET_ACCESS_KEY"]
+    command['region_name']=self.vault.region
+    command['file_name']=fname if fname is not None else app.config['UNKNOWN_FILENAME']
+    command['file_size']=file_size
+    command['vault_name']=vault_name
+    command['job_id']=job_id
+    queues[request.remote_addr].append(command)
     for i in xrange(num_chunks):
       byte_range = ((i * chunk_size), ((i + 1) * chunk_size) - 1)
       response = handler.get_job_output(vault_name,job_id,byte_range)

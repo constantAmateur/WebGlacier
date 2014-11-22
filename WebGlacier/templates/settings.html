@@ -4,6 +4,81 @@
 <h1> Settings </h1>
 <form action="/glacier/settings/" method='post' name="settings">
   {{form.hidden_tag()}}
+  <h2> Amazon Settings </h2>
+    {% for error in form.errors['meta_amazon'] %}
+      <span class='error'>[{{error}}]</span>
+    {% endfor %}
+    <table>
+    <tr>
+      <td><b>Default Region:</b></td>
+      <td>
+        {{form.DEFAULT_REGION()}}
+      </td>
+      <td>
+        {% for error in form.errors.DEFAULT_REGION %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>AWS Access Key:</b></td>
+      <td>
+        {{form.AWS_ACCESS_KEY()}}
+      </td>
+      <td>
+        {% for error in form.errors.AWS_ACCESS_KEY %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>AWS Secret Access Key:</b></td>
+      <td>
+        {{form.AWS_SECRET_ACCESS_KEY()}}
+      </td>
+      <td>
+        {% for error in form.errors.AWS_SECRET_ACCESS_KEY %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+  </table>
+  <h2> Web Glacier Settings </h2>
+  <table>
+    <tr>
+      <td><b>Upload Chunk Size(bytes):</b></td>
+      <td>
+        {{form.UCHUNK()}}
+      </td>
+      <td>
+        {% for error in form.errors.UCHUNK %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>Download Chunk Size(bytes):</b></td>
+      <td>
+        {{form.DCHUNK()}}
+      </td>
+      <td>
+        {% for error in form.errors.DCHUNK %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>File Name For Unknown Files:</b></td>
+      <td>
+        {{form.UNKNOWN_FILENAME()}}
+      </td>
+      <td>
+        {% for error in form.errors.UNKNOWN_FILENAME %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+  </table>
   <h2> Database Settings </h2>
     {% for error in form.errors['meta_sql'] %}
       <span class='error'>[{{error}}]</span>
@@ -76,103 +151,6 @@
       </td>
     </tr>
   </table>
-  <h2> Amazon Settings </h2>
-    {% for error in form.errors['meta_amazon'] %}
-      <span class='error'>[{{error}}]</span>
-    {% endfor %}
-    <table>
-    <tr>
-      <td><b>Default Region:</b></td>
-      <td>
-        {{form.DEFAULT_REGION()}}
-      </td>
-      <td>
-        {% for error in form.errors.DEFAULT_REGION %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>AWS Access Key:</b></td>
-      <td>
-        {{form.AWS_ACCESS_KEY()}}
-      </td>
-      <td>
-        {% for error in form.errors.AWS_ACCESS_KEY %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>AWS Secret Access Key:</b></td>
-      <td>
-        {{form.AWS_SECRET_ACCESS_KEY()}}
-      </td>
-      <td>
-        {% for error in form.errors.AWS_SECRET_ACCESS_KEY %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-  </table>
-  <h2> Web Glacier Settings </h2>
-  <table>
-    <tr>
-      <td><b>Temporary Directory:</b></td>
-      <td>
-        {{form.TEMP_FOLDER()}}
-      </td>
-      <td>
-        {% for error in form.errors.TEMP_FOLDER %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>Cache Directory:</b></td>
-      <td>
-        {{form.LOCAL_CACHE()}}
-      </td>
-      <td>
-        {% for error in form.errors.LOCAL_CACHE %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>Cache Size(bytes):</b></td>
-      <td>
-        {{form.LOCAL_CACHE_SIZE()}}
-      </td>
-      <td>
-        {% for error in form.errors.LOCAL_CACHE_SIZE %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>Max Cache File Size(bytes):</b></td>
-      <td>
-        {{form.LOCAL_CACHE_MAX_FILE_SIZE()}}
-      </td>
-      <td>
-        {% for error in form.errors.LOCAL_CACHE_MAX_FILE_SIZE %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>File Name For Unknown Files:</b></td>
-      <td>
-        {{form.UNKNOWN_FILENAME()}}
-      </td>
-      <td>
-        {% for error in form.errors.UNKNOWN_FILENAME %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-  </table>
   <h2> Nerdy settings for nerds </h2>
   <table>
     <tr>
@@ -209,17 +187,6 @@
       </td>
     </tr>
     <tr>
-      <td><b>Chunk Size For Transfer:</b></td>
-      <td>
-        {{form.CHUNK_SIZE()}}
-      </td>
-      <td>
-        {% for error in form.errors.CHUNK_SIZE %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
       <td><b>SQL Driver:</b></td>
       <td>
         {{form.SQL_DRIVER()}}
@@ -231,7 +198,34 @@
       </td>
     </tr>
   </table>
-
+  <h2> Security Settings </h2>
+  <div>
+    <b> Leave these alone unless you know what you're doing.  I mean it. </b>
+  </div>
+  <table>
+    <tr>
+      <td><b>Disable SSL/HTTPS:</b></td>
+      <td>
+        {{form.DISABLE_HTTPS()}}
+      </td>
+      <td>
+        {% for error in form.errors.DISABLE_HTTPS %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>Disable Autentication:</b></td>
+      <td>
+        {{form.DISABLE_AUTH()}}
+      </td>
+      <td>
+        {% for error in form.errors.DISABLE_AUTH %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+  </table>
   <input type='submit' value="Save Changes">
 </form>
 {% endblock %}

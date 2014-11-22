@@ -1,4 +1,5 @@
 import os
+import collections
 
 def ensure_path(tgt):
   """
@@ -22,4 +23,16 @@ def human_readable(size,roundoff=2):
     return ("%.0"+str(roundoff)+"f KiB") % (size/1024.)
   return "%d B" % size
 
+def deunicode(data):
+  """
+  Gets rid of unicode strings introduced by decoding that mess some things up.
+  """
+  if isinstance(data, basestring):
+    return str(data)
+  elif isinstance(data, collections.Mapping):
+    return dict(map(deunicode, data.iteritems()))
+  elif isinstance(data, collections.Iterable):
+    return type(data)(map(deunicode, data))
+  else:
+    return data
 

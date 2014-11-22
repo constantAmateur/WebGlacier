@@ -9,11 +9,28 @@
   {% endblock %}
 </head>
 <body>
+    {% block form_start %}
+    {% endblock %}
     {% block header %}
     <div id='cssmenu'>
         <ul>
           <li ><a href="/glacier/"><span>Home</span></a></li>
           <li><a href="/glacier/settings/"><span>Settings</span></a></li>
+          <li style="float:right;">
+            <span id='clientSelect'>
+              Target client:
+
+              <select name='client_select'>
+                {% for client in clients %}
+                  {% if client == clients[0] %}
+                    <option value="{{client}}" selected='selected'>{{client}}</option>
+                  {% else %}
+                    <option value="{{client}}">{{client}}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </span>
+          </li>
         </ul>
       </div>
 

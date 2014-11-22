@@ -5,6 +5,8 @@ from datetime import datetime
 
 from WebGlacier import app, handlers, db
 from WebGlacier.models import Vault,Archive,Job
+from WebGlacier import live_clients
+
 
 def str_to_dt(string):
   """
@@ -29,6 +31,41 @@ def get_set_region():
   elif 'region' in session and session['region'] in handlers:
     return session['region']
   return app.config["DEFAULT_REGION"]
+
+def update_live_clients():
+  """
+  Check how long it has been since the last check-in and drops any clients that
+  have missed too many check-ins.
+  """
+  now=datetime.utcnow()
+  kill_em_all=[]
+  for client,dat in live_clients.iteritems():
+    last_seen,poll_freq,processing = dat
+    delta=(now-last_seen).total_seconds()
+    nmiss = delta/poll_freq
+    if nmiss > 5 and not processing:
+      kill_em_all.append(client)
+  for hit in kill_em_all:
+    _ = live_clients.pop(hit)
+
+def get_valid_clients():
+  """
+  Determine which of the client are connected and have a valid IP.
+  If it's in the list, put the current client first.
+  """
+  #Update the clients first
+  update_live_clients()
+  #Now get the clients that match this ip and are live
+  webip=str(request.remote_addr)
+  passed=[]
+  for client in live_clients.keys():
+    cip = client[client.rfind("(")+1:-1] if client[-1]==")" else client
+    if cip == webip:
+      passed.append(client)
+  #Put the current one at the front if it's in it
+  if app.config['current_client'] in passed:
+      passed.insert(0,passed.pop(passed.index(app.config['current_client'])))
+  return passed
 
 def get_handler(region=None):
   if region is None:
@@ -101,34 +138,36 @@ def process_archive(archive,vault):
   tmp.insertion_date = str_to_dt(archive["CreationDate"])
   tmp.SHA256_tree_hash = archive["SHA256TreeHash"]
   tmp.filesize = archive["Size"]
+  #Try and fill in metadata from the description if possible
+  tmp.populate_from_description()
   db.session.add(tmp)
   db.session.commit()
   return tmp
 
-def upload_archive(fname,vault,chunk=None,true_path=None):
-  """
-  Usually fname is just the name of a temporary file, in which
-  case the true pathname of the file must be given to true_path
-  or the database will record garbage for the filename and path
-  """
-  if true_path is None:
-    true_path = fname
-  if not os.path.isfile(fname):
-    print("%s is not a valid file!  Upload failed!" % fname)
-    return None
-  if chunk is None:
-    chunk=app.config["CHUNK_SIZE"]
-  handler = get_handler()
-  uploader = ConcurrentUploader(handler,str(vault.name),part_size=chunk)
-  print("Beginning upload of file %s.  Please by patient, there is no progress bar..." % fname)
-  #description = raw_input("Enter description for file %s (enter nothing to use filename):"%fname)
-  description="Automatic upload of "+true_path
-  archive_id = uploader.upload(fname,description)
-  print("Successfully uploaded %s" % fname)
-  filesize = os.path.getsize(fname) 
-  filename = os.path.basename(true_path)
-  fullpath = true_path
-  archive = Archive(archive_id,description,vault,filename=filename,fullpath=fullpath,filesize=filesize)
-  db.session.add(archive)
-  db.session.commit()
-  return archive
+#def upload_archive(fname,vault,chunk=None,true_path=None):
+#  """
+#  Usually fname is just the name of a temporary file, in which
+#  case the true pathname of the file must be given to true_path
+#  or the database will record garbage for the filename and path
+#  """
+#  if true_path is None:
+#    true_path = fname
+#  if not os.path.isfile(fname):
+#    print("%s is not a valid file!  Upload failed!" % fname)
+#    return None
+#  if chunk is None:
+#    chunk=app.config["CHUNK_SIZE"]
+#  handler = get_handler()
+#  uploader = ConcurrentUploader(handler,str(vault.name),part_size=chunk)
+#  print("Beginning upload of file %s.  Please by patient, there is no progress bar..." % fname)
+#  #description = raw_input("Enter description for file %s (enter nothing to use filename):"%fname)
+#  description="Automatic upload of "+true_path
+#  archive_id = uploader.upload(fname,description)
+#  print("Successfully uploaded %s" % fname)
+#  filesize = os.path.getsize(fname) 
+#  filename = os.path.basename(true_path)
+#  fullpath = true_path
+#  archive = Archive(archive_id,description,vault,filename=filename,fullpath=fullpath,filesize=filesize)
+#  db.session.add(archive)
+#  db.session.commit()
+#  return archive
