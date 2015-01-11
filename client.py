@@ -9,10 +9,10 @@ import hashlib
 import collections
 
 #Root of server.  Must include any prefix that we require...
-server_address = 'http://127.0.0.1:5000/'
+server_address = 'http://example.com/glacier/'
 #Server username/password
-username = 'admin'
-password = 'admin'
+username = '***REMOVED***'
+password = 'pass'
 #Time to wait between checks of the queue
 check_wait = 10
 #Chunk size for downloading

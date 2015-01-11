@@ -123,9 +123,9 @@ def settings():
   """
   form=SettingsForm(**WG.app.config)
   if form.validate_on_submit():
-    cfile=os.path.join(WG.__path__[0],"settings.cfg")
+    cfile=os.path.join(WG.__path__[0],"../settings.cfg")
     save_settings(form.data,cfile)
-    WG.app.config.from_pyfile("settings.cfg")
+    WG.app.config.from_pyfile("../settings.cfg")
     WG.app.config.from_envvar("GLACIER_CONFIG",silent=True)
     return redirect(url_for('settings'))
   rnom=get_set_region()

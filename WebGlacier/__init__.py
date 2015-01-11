@@ -6,7 +6,7 @@ from boto import glacier
 app = Flask(__name__,static_folder=None)
 
 #Configure the application
-app.config.from_pyfile("settings.cfg")
+app.config.from_pyfile("../settings.cfg")
 app.config.from_envvar("GLACIER_CONFIG",silent=True)
 #Make a dictionary of queues of stuff that remotes need to do
 queues = dict()

@@ -8,3 +8,5 @@
 *.pyc
 #Don't want to track the virtualenv
 venv/
+#Don't save the proper settings file
+settings.cfg
