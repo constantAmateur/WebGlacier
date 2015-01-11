@@ -1,31 +1,33 @@
 #Make a copy of this file in the same place without the .template extension
+
 #Amazon glacier settings
 DEFAULT_REGION = 'eu-west-1'
 AWS_ACCESS_KEY = """Get from AWS control panel"""
 AWS_SECRET_ACCESS_KEY = """this too"""
 
 #Database settings
-SQL_DATABASE_NAME = '/home/myoung/src/WebGlacier/New/glacierdb'
 SQL_DIALECT = "sqlite"
-SQL_DRIVER  = ''
+SQL_DATABASE_NAME = '/home/myoung/src/WebGlacier/New/glacierdb'
 SQL_USERNAME = ""
 SQL_PASSWORD = ""
 SQL_HOSTNAME = ""
 SQL_PORT = None
+SQL_DRIVER  = ''
 #Fix MYSQL gone away errors
 SQLALCHEMY_POOL_RECYCLE = 3600
 
 #Webserver parameters
-APP_HOST = '127.0.0.1'
-#Prepends a prefix to all URLs.  Usefull if you're running from somewhere other than the (sub)domain root
-URL_PREFIX = ''
 SECRET_KEY = """random string here"""
+#Prepends a prefix to all URLs.  Useful if you're running from somewhere other than the (sub)domain root
+URL_PREFIX = ''
+#Only relevant if running via runserver.py.  The host on which the server will listen
+APP_HOST = '127.0.0.1'
 #These **MUST** be set to False when running seriously
 DEBUG = False
 USE_RELOADER = False
-#These **MUST** be Falso in production, except if something else is doing it for you (e.g. nginx)
+#These **MUST** be False in production, except if something else is doing it for you (e.g. nginx)
 #Don't disable these unless you're using nginx or something else to do it for you
-#Really, this app really really should be used with https and a password
+#This app really really should be used with https and a password
 DISABLE_HTTPS = False
 DISABLE_AUTH = False
 #Username and password to connect to the app if you're using the built-in auth

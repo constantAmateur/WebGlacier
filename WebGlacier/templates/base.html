@@ -17,19 +17,24 @@
         <ul>
           <li ><a href="{{ url_for('main') }}"><span>Home</span></a></li>
           <li><a href="{{ url_for('settings') }}"><span>Settings</span></a></li>
+          <li><a href="{{ url_for('help') }}"><span>Help</span></a></li>
           <li style="float:right;">
             <span id='clientSelect'>
-              Target client:
-
-              <select name='client_select'>
-                {% for client in clients %}
-                  {% if client == clients[0] %}
-                    <option value="{{client}}" selected='selected'>{{client}}</option>
-                  {% else %}
-                    <option value="{{client}}">{{client}}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
+              {% if clients|length == 0 %}
+                <a href="{{ url_for('get_client') }}" style='color:white;'>Download</a> and run client to up/download
+                <select name='client_select' style='display:none;'></select>
+              {% else %}
+                Target client:
+                <select name='client_select'>
+                  {% for client in clients %}
+                    {% if client == clients[0] %}
+                      <option value="{{client}}" selected='selected'>{{client}}</option>
+                    {% else %}
+                      <option value="{{client}}">{{client}}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              {% endif %}
             </span>
           </li>
         </ul>
@@ -43,7 +48,8 @@
   </div>
   <div id="footer">
     {% block footer %}
-    &copy; Copyright 2015 by <a href="https://github.com/constantAmateur/WebGlacier/">Matthew Young</a>.
+    &copy; Copyright 2015 by <a href="https://github.com/constantAmateur/WebGlacier/">Matthew Young</a>.  <br/><a href="{{ url_for('get_client') }}">Get the client</a>.
+
     {% endblock %}
   </div>
 </body>

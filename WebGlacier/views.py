@@ -67,9 +67,16 @@ def main():
   _ = get_vaults()
   #Get all the vaults
   vaults = Vault.query.filter_by(region=region)
+  from WebGlacier.lib.app import get_client_code
+  get_client_code()
   #Render them all nicely
   return render_template("main.html",vaults=vaults,rnom=region,regions=WG.handlers.keys(),clients=get_valid_clients())
 
+@WG.app.route(WG.app.config.get("URL_PREFIX","")+"/help",methods=["GET"])
+def help():
+  """A simple help page"""
+  return render_template("help.html",clients=get_valid_clients())
+ 
 @WG.app.route(WG.app.config.get("URL_PREFIX","")+"/<vault_name>/")
 def vault_view(vault_name):
   """

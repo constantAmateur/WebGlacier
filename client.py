@@ -1,3 +1,42 @@
+###################
+# User parameters #
+###################
+
+##########################
+# You **MUST** set these #
+##########################
+#Directory where files are downloaded to.  Must exist.
+ddir = '/home/myoung/Downloads/'
+#Nickname of this computer.  Used to help identify which machine should download
+client_name = 'pikachoo'
+#########################################################################################
+# These must be accurate, but should be set automatically if downloaded from the server #
+#########################################################################################
+#Root of server.  Must include any prefix that we require...
+server_address = ''
+#Server username/password
+username = ''
+password = ''
+#####################################################
+# Default here should be fine, change if you'd like #
+#####################################################
+#Polling frequency.  That is, wait time between checking the queue
+check_wait = 10
+#Chunk size for downloading
+dchunk = 1048576
+#Chunk size for uploading
+uchunk = 4194304
+
+###########################################
+# **DO NOT ALTER ANYTHING BELOW HERE!!!** #
+###########################################
+
+
+###############
+# Client code #
+###############
+
+
 from boto.glacier.layer1 import Layer1
 from boto.glacier.concurrent import ConcurrentUploader
 import urllib3
@@ -7,23 +46,6 @@ import os
 import math
 import hashlib
 import collections
-
-#Root of server.  Must include any prefix that we require...
-server_address = 'http://example.com/glacier/'
-#Server username/password
-username = '***REMOVED***'
-password = 'pass'
-#Time to wait between checks of the queue
-check_wait = 10
-#Chunk size for downloading
-dchunk = 1048576
-#Chunk size for uploading
-uchunk = 4194304
-#Download dir
-ddir = '/home/myoung/Downloads/'
-#Machine announce name
-client_name = 'pikachoo'
-
 
 #Initialise some stuff
 pool = urllib3.PoolManager()
@@ -151,66 +173,3 @@ while True:
   except urllib3.exceptions.MaxRetryError:
     print "Server did not respond, waiting and then trying again..."
   time.sleep(check_wait)
-
-
-
-
-
-#sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#
-#server_address = ('localhost', 1313)
-#print >>sys.stderr, 'connecting to %s port %s' % server_address
-#sock.connect(server_address)
-##Connected, wait till I'm asked to do something
-#while True:
-#  data = sock.recv(1024)
-#  print >>sys.stderr, "Asked to execute command '%s'" % data
-#  if data[0]=='d':
-#    #We want to download something, so do that...
-#    download_file_to_dir(data[1:])
-#    #If I need to send a response, do it here
-#  elif data[0]=='u':
-#    #We want to upload something
-#    #response=upload_file(data[1:])
-#    #Send the returned information that needs storing in the db...
-#    sock.sendall(response)
-#  else:
-#    print >>sys.stderr, "Malformed request passed."
-#
-#def download_file_to_dir(data,chunk_size=1048576):
-#    """
-#    Download a file using the information sent by the server.
-#    """
-#    handler,vault_name,job_id = parse_server_info(data)
-#    f=open("/home/myoung/Downloads/test_glacier_file.bs",'wb')
-#    num_chunks = int(math.ceil(file_size / float(chunk_size)))
-#    for i in xrange(num_chanks):
-#      byte_range = ((i * chunk_size), ((i + 1) * chunk_size) - 1)
-#      dload = handler.get_job_output(vault_name,job_id,byte_range)
-#      f.write(dload.read())
-#    f.close()
-#    #Send the everything's OK message
-#
-#def upload_file_to_vault(data,chunk=None):
-#    """
-#    Upload a file using the information sent by the server.
-#    """
-#    handler,fname,description = parse_server_info(data)
-#    uploader = ConcurrentUploader(handler,vault_name,part_size=chunk)
-#    archive_id = uploader.upload(fname,description)
-#    #pass back the completed message
-#
-#
-#
-#
-#
-#def parse_server_info(data):
-#    """
-#    Get the information we need to create a handler and any other shit
-#    """
-#    tmp=data.split("\t")
-#    access_key,secret_access_key,region_name = tmp[:3]
-#    handler = Layer1(aws_access_key_id = access_key,aws_secret_access_key = secret_access_key,region_name=region_name)
-#    return [handler]+tmp[3:]
-#
-#

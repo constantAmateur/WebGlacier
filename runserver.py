@@ -13,9 +13,9 @@ except SSL.Error:
 if app.config.get('DISABLE_HTTPS',False):
   context = None
 #Disable authentication.  Don't do this unless you've replaced it...
-#if not app.config.get("DISABLE_AUTH",False):
-#  #Apply basic auth on entire site
-#  app.config['BASIC_AUTH_FORCE'] = True
-#  basic_auth = BasicAuth(app)
+if not app.config.get("DISABLE_AUTH",False):
+  #Apply basic auth on entire site
+  app.config['BASIC_AUTH_FORCE'] = True
+  basic_auth = BasicAuth(app)
 
 app.run(app.config.get('APP_HOST'),debug=app.config.get('DEBUG',True),use_reloader=app.config.get('USE_RELOADER',True),ssl_context=context)

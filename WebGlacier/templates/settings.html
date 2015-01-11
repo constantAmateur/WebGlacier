@@ -5,6 +5,7 @@
 <form action="{{ url_for('settings') }}" method='post' name="settings">
   {{form.hidden_tag()}}
   <h2> Amazon Settings </h2>
+    <h3> Needed to connect to Amazon glacier servers. </h3>
     {% for error in form.errors['meta_amazon'] %}
       <span class='error'>[{{error}}]</span>
     {% endfor %}
@@ -43,43 +44,9 @@
       </td>
     </tr>
   </table>
-  <h2> Web Glacier Settings </h2>
-  <table>
-    <tr>
-      <td><b>Upload Chunk Size(bytes):</b></td>
-      <td>
-        {{form.UCHUNK()}}
-      </td>
-      <td>
-        {% for error in form.errors.UCHUNK %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>Download Chunk Size(bytes):</b></td>
-      <td>
-        {{form.DCHUNK()}}
-      </td>
-      <td>
-        {% for error in form.errors.DCHUNK %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>File Name For Unknown Files:</b></td>
-      <td>
-        {{form.UNKNOWN_FILENAME()}}
-      </td>
-      <td>
-        {% for error in form.errors.UNKNOWN_FILENAME %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-  </table>
+
   <h2> Database Settings </h2>
+    <h3> Needed to keep a record of archives stored on Glacier. </h3>
     {% for error in form.errors['meta_sql'] %}
       <span class='error'>[{{error}}]</span>
     {% endfor %}
@@ -107,17 +74,6 @@
       </td>
     </tr>
     <tr>
-      <td><b>SQL Hostname:</b></td>
-      <td>
-        {{form.SQL_HOSTNAME()}}
-      </td>
-      <td>
-        {% for error in form.errors.SQL_HOSTNAME %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
       <td><b>SQL Username:</b></td>
       <td>
         {{form.SQL_USERNAME()}}
@@ -139,6 +95,17 @@
         {% endfor %}
       </td>
     </tr>
+    <tr>
+      <td><b>SQL Hostname:</b></td>
+      <td>
+        {{form.SQL_HOSTNAME()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_HOSTNAME %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
      <tr>
       <td><b>SQL Port:</b></td>
       <td>
@@ -150,8 +117,48 @@
         {% endfor %}
       </td>
     </tr>
+    <tr>
+      <td><b>SQL Driver:</b></td>
+      <td>
+        {{form.SQL_DRIVER()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQL_DRIVER %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>SQL Alchemy Pool Recycle:</b></td>
+      <td>
+        {{form.SQLALCHEMY_POOL_RECYCLE()}}
+      </td>
+      <td>
+        {% for error in form.errors.SQLALCHEMY_POOL_RECYCLE %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
   </table>
+
+  <h2> Web Glacier Settings </h2>
+  <h3> Customise things about the Web Glacier interface </h3>
+  <table>
+    <tr>
+      <td><b>File name for unknown files:</b></td>
+      <td>
+        {{form.UNKNOWN_FILENAME()}}
+      </td>
+      <td>
+        {% for error in form.errors.UNKNOWN_FILENAME %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
+  </table>
+  {# Disabled these as anyone who should be changing them should know how to edit a config file
   <h2> Nerdy settings for nerds </h2>
+  <h4> Change them if you know what they're for </h4>
   <table>
     <tr>
       <td><b>Debug:</b></td>
@@ -175,33 +182,11 @@
         {% endfor %}
       </td>
     </tr>
-    <tr>
-      <td><b>SQL Alchemy Pool Recycle:</b></td>
-      <td>
-        {{form.SQLALCHEMY_POOL_RECYCLE()}}
-      </td>
-      <td>
-        {% for error in form.errors.SQLALCHEMY_POOL_RECYCLE %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <td><b>SQL Driver:</b></td>
-      <td>
-        {{form.SQL_DRIVER()}}
-      </td>
-      <td>
-        {% for error in form.errors.SQL_DRIVER %}
-          <span class='error'>[{{error}}]</span>
-        {% endfor %}
-      </td>
-    </tr>
   </table>
   <h2> Security Settings </h2>
-  <div>
+  <h4>
     <b> Leave these alone unless you know what you're doing.  I mean it. </b>
-  </div>
+  </h4>
   <table>
     <tr>
       <td><b>Disable SSL/HTTPS:</b></td>
@@ -226,6 +211,9 @@
       </td>
     </tr>
   </table>
+  #}
   <input type='submit' value="Save Changes">
+  <h3> To change security and app serving settings, edit settings.cfg in the root path
+    directly.  If you don't know how to do that, you probably shouldn't be changing them. </h3>
 </form>
 {% endblock %}

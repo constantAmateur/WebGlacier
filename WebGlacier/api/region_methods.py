@@ -8,14 +8,15 @@ operations.
 
 #External dependency imports
 from boto.glacier.exceptions import UnexpectedHTTPResponseError
+import StringIO
 
 #Flask imports
-from flask import request, session, redirect, url_for, abort
+from flask import request, session, redirect, url_for, abort, send_file
 
 #WebGlacier imports
 import WebGlacier as WG
 from WebGlacier.models import Vault
-from WebGlacier.lib.app import get_handler, validate_glacier
+from WebGlacier.lib.app import get_handler, validate_glacier,get_client_code
 from WebGlacier.lib.glacier import process_vault
 
 @WG.app.route(WG.app.config.get("URL_PREFIX","")+"/action/setregion",methods=["GET"])
@@ -86,3 +87,16 @@ def get_vaults():
   except UnexpectedHTTPResponseError as e:
     print "Failed processing/loading vaults.  Error was %s"%e.message
   return redirect(url_for("main"))
+
+
+@WG.app.route(WG.app.config.get("URL_PREFIX","")+"/action/getclient",methods=["GET"])
+def get_client():
+  """
+  Not strictly a region method, more of a global method, but eh.
+  Generates a custom client.py file with the appropriate server values set
+  and sends it to requester.
+  """
+  strIO = StringIO.StringIO()
+  strIO.write(str(get_client_code()))
+  strIO.seek(0)
+  return send_file(strIO,attachment_filename="WebGlacier_client.py",as_attachment=True)
