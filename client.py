@@ -21,6 +21,7 @@ password = ''
 # Default here should be fine, change if you'd like #
 #####################################################
 #Polling frequency.  That is, wait time between checking the queue
+#Time to wait between checks of the queue
 check_wait = 10
 #Chunk size for downloading
 dchunk = 1048576
