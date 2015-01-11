@@ -3,19 +3,20 @@
 <head>
   {% block head %}
   <title>{% block title%}{% endblock %} - WebGlacier</title>
-    <link rel='stylesheet' type='text/css' href='/static/css.css' />
-    {#<link rel='stylesheet' type='text/css' href='/static/menu_assets/styles.css' />#}
-    <link rel='stylesheet' type='text/css' href='/static/cssmenu/menu_assets/styles.css' />
+    <link rel='stylesheet' type='text/css' href='{{ url_for("static",filename="css.css") }}' />
+    <link rel='stylesheet' type='text/css' href='{{ url_for("static",filename="cssmenu/menu_assets/styles.css") }}' />
   {% endblock %}
 </head>
 <body>
+  
     {% block form_start %}
     {% endblock %}
     {% block header %}
+
     <div id='cssmenu'>
         <ul>
-          <li ><a href="/glacier/"><span>Home</span></a></li>
-          <li><a href="/glacier/settings/"><span>Settings</span></a></li>
+          <li ><a href="{{ url_for('main') }}"><span>Home</span></a></li>
+          <li><a href="{{ url_for('settings') }}"><span>Settings</span></a></li>
           <li style="float:right;">
             <span id='clientSelect'>
               Target client:
@@ -34,20 +35,7 @@
         </ul>
       </div>
 
-    {#<div id='cssmenu'>
-        <ul>
-          <li ><a href="/glacier/"><span>Home</span></a></li>
-          <li><a href="/glacier/settings/"><span>Settings</span></a></li>
-        </ul>
-      </div>#}
-      {#<ul id="mainMenu">
-        <li>
-          <a href="/glacier/">Home</a>
-        </li>
-        <li>
-          <a href="/glacier/settings/">Settings</a>
-        </li>
-      </ul>#}
+
     {% endblock %}
   <div id="content">
     {% block body %}
@@ -55,7 +43,7 @@
   </div>
   <div id="footer">
     {% block footer %}
-    &copy; Copyright 2013 by <a href="https://github.com/constantAmateur/WebGlacier/">Matthew Young</a>.
+    &copy; Copyright 2015 by <a href="https://github.com/constantAmateur/WebGlacier/">Matthew Young</a>.
     {% endblock %}
   </div>
 </body>

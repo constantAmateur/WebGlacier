@@ -148,7 +148,7 @@ tr.odd{
 
 /*Different link and form submit icons */
 .download-link {
-  background-image:url(/static/icons/PNG/dark/24px/24_download.png);
+  background-image:url(icons/PNG/dark/24px/24_download.png);
   display:block;
   height:24px;
   width:24px;
@@ -156,7 +156,7 @@ tr.odd{
 }
 
 .delete-link {
-  background-image:url(/static/icons/PNG/dark/24px/24_trash.png);
+  background-image:url(icons/PNG/dark/24px/24_trash.png);
   display:block;
   height:24px;
   width:24px;
@@ -164,7 +164,7 @@ tr.odd{
 }
 
 .request-link {
-  background-image:url(/static/icons/PNG/dark/24px/24_cart.png);
+  background-image:url(icons/PNG/dark/24px/24_cart.png);
   display:block;
   height:24px;
   width:24px;
@@ -172,7 +172,7 @@ tr.odd{
 }
 
 .inventory-link {
-  background-image:url(/static/icons/PNG/dark/24px/24_catalogue.png);
+  background-image:url(icons/PNG/dark/24px/24_catalogue.png);
   display:block;
   height:24px;
   width:24px;

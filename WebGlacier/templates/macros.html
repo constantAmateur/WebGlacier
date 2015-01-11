@@ -27,7 +27,7 @@
       {% if not vault.lock %}
         <a href="action/deletevault?name={{vault.name}}" class='delete-link' title="Delete">Delete</a> 
       {% else %}
-        <img src="/static/icons/PNG/dark/16px/16_lock.png" alt="Vault Locked" height="16" width="16">
+        <img src="{{ url_for('static',filename='icons/PNG/dark/16px/16_lock.png') }}" alt="Vault Locked" height="16" width="16">
       {% endif %}
     </td>
   </tr>
@@ -78,7 +78,7 @@
 {% macro render_archive(archive,lock=False,has_client=False) -%}
   <div class="archive">
     {% set live=archive.get_download_jobs() %}
-    <tr class="{% if archive.is_cached() %} cached {% elif live==None %} archived {% elif not live[0].completed %} pending {% else %} complete {% endif %}">
+    <tr class="{% if live==None %} archived {% elif not live[0].completed %} pending {% else %} complete {% endif %}">
     <td align='center'>
       {% if live==None %}
         <a href="action/getarchive?archive_id={{archive.archive_id}}" class='request-link' title="Request Retrieval">Request Data</a>
@@ -86,7 +86,7 @@
         Please wait...
       {% else %}
         {% if has_client %}
-          <input type='image' name='download' value='{{archive.archive_id}}' src='/static/icons/PNG/dark/24px/24_download.png' title='Download'>
+          <input type='image' name='download' value='{{archive.archive_id}}' src='{{ url_for("static",filename="icons/PNG/dark/24px/24_download.png") }}' title='Download'>
         {% else %}
           Connect client to download
         {% endif %}

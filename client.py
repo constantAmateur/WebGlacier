@@ -8,11 +8,11 @@ import math
 import hashlib
 import collections
 
-#Root of server
-server_address = 'https://127.0.0.1:5000/glacier/'
+#Root of server.  Must include any prefix that we require...
+server_address = 'http://127.0.0.1:5000/'
 #Server username/password
-username = '***REMOVED***'
-password = 'emanon'
+username = 'admin'
+password = 'admin'
 #Time to wait between checks of the queue
 check_wait = 10
 #Chunk size for downloading

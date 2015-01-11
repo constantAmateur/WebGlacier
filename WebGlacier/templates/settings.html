@@ -2,7 +2,7 @@
 {% block title %} Settings {% endblock %}
 {% block body %}
 <h1> Settings </h1>
-<form action="/glacier/settings/" method='post' name="settings">
+<form action="{{ url_for('settings') }}" method='post' name="settings">
   {{form.hidden_tag()}}
   <h2> Amazon Settings </h2>
     {% for error in form.errors['meta_amazon'] %}

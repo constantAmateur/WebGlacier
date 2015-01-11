@@ -1,5 +1,6 @@
 import os
 import collections
+from datetime import datetime
 
 def ensure_path(tgt):
   """
@@ -36,3 +37,16 @@ def deunicode(data):
   else:
     return data
 
+def str_to_dt(string):
+  """
+  Converts an amazon datetime string to a python localized datetime object
+  """
+  if string is None or string=='':
+    return None
+  try:
+    t=datetime.strptime(string,"%Y-%m-%dT%H:%M:%S.%fZ")
+    return t
+    #utc=pytz.UTC
+    #return utc.localize(t)
+  except ValueError:
+    return None

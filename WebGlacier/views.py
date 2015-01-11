@@ -1,63 +1,76 @@
-from flask import redirect, url_for
-from flask import render_template
-from flask import request
-from forms import SettingsForm
-from datetime import datetime
+"""
+File containing the routes and code to load all the pages
+that the end user actually views.
+"""
 
-from WebGlacier import app, handlers, db, live_clients
-from WebGlacier import queues
-from WebGlacier.models import Archive
-from WebGlacier.lib.db import get_set_region,get_valid_clients
-from WebGlacier.lib.misc import deunicode
-from WebGlacier.vault_methods import check_job_status,download_archive,upload_archive
-from WebGlacier.region_methods import get_vaults
-from models import Vault
-import os,re
-import json
-import WebGlacier
+#External dependency imports
+import os
 
+#Flask imports
+from flask import redirect, url_for, render_template, request, session
 
-@app.route("/glacier/baba",methods=['POST'])
-def multi_dispatch():
+#WebGlacier imports
+import WebGlacier as WG
+from WebGlacier.models import Vault
+from WebGlacier.forms import SettingsForm
+from WebGlacier.api.region_methods import get_vaults
+from WebGlacier.api.vault_methods import check_job_status
+from WebGlacier.lib.app import get_valid_clients, get_set_region, save_settings
+from WebGlacier.lib.app import build_db_key,validate_db,validate_glacier, init_handlers_from_config
+
+#Not a view, but where else am I going to put it?
+@WG.app.before_request
+def validate_connection():
   """
-  This should handle the big form submit.  That is, when we hit any of the
-  buttons on the vault pages, it should end up hear and do what was
-  asked after some validation.
+  The whole app is useless unless we have a database 
+  to store things and a valid connection to Amazon
+  Glacier.  So check that we do and redirect to 
+  settings page if we don't.
   """
-  #Get the valid clients and make sure the one we selected is one of them
-  clients = get_valid_clients()
-  client = request.form.get("client_select")
-  if client in clients:
-    #We've got a valid client, save it
-    app.config['current_client'] = client
-  print client
-  #Are we just changing vaults, if so don't need the extra validation stuff
-  if 'vault_select_pressed' in request.form:
-    print "Changing vault"
-    #Change vault and we're done
-    return redirect("/glacier/"+request.form['vault_select'])
-  #Either we're done, or we need to do something else
-  if client in clients:
-    #Did we press upload?
-    if 'upload_pressed' in request.form:
-      #Extract description
-      description=request.form['upload_description']
-      if description=="Description of file.":
-        description=''
-      #Do upload
-      print "Doing upload from vault %s with path %s"%(request.form['vault_name'],request.form['upload_path'])
-      upload_archive(request.form['vault_name'],request.form['upload_path'],client,description)
-    elif 'download' in request.form:
-      #Do download
-      print "Doing download from vault %s with id %s"%(request.form['vault_name'],request.form['download'])
-      download_archive(request.form['vault_name'],request.form['download'],client)
-  else:
-    print "Invalid client, doing nothing"
-  print request.form
-  print queues
-  return redirect(request.referrer)
+  #Make sure we have set a region
+  if 'region' not in session:
+    session['region'] = get_set_region()
+  #Are we at a url where we don't need to check things?
+  print request.endpoint
+  if request.endpoint!='settings' and request.endpoint!='static':
+    #If everything has passed before, assume it will again
+    #Is the db connection OK?
+    if not WG.validated_db:
+      try: 
+        key=build_db_key(WG.app.config["SQL_DIALECT"],WG.app.config["SQL_DATABASE_NAME"],WG.app.config["SQL_HOSTNAME"],WG.app.config["SQL_USERNAME"],WG.app.config["SQL_PASSWORD"],WG.app.config["SQL_DRIVER"],WG.app.config["SQL_PORT"])
+        validate_db(key)
+        WG.app.config["SQLALCHEMY_DATABASE_URI"]=key
+        WG.db.create_all()
+        WG.validated_db=True
+      except:
+        print "Can't connect to database."
+        WG.validated_db=False
+        raise ValueError
+        return redirect(url_for('settings'))
+    #Is the Amazon Glacier config okay?
+    if not WG.validated_glacier:
+      try:
+        validate_glacier(WG.app.config["AWS_ACCESS_KEY"],WG.app.config["AWS_SECRET_ACCESS_KEY"],WG.app.config.get("DEFAULT_REGION"))
+        init_handlers_from_config()
+        WG.validated_glacier=True
+      except:
+        print "Can't connect to Glacier."
+        WG.validated_glacier=False
+        return redirect(url_for('settings'))
 
-@app.route("/glacier/<vault_name>/")
+
+@WG.app.route(WG.app.config.get("URL_PREFIX","")+"/",methods=["GET"])
+def main():
+  """The main interface for the glacier database."""
+  region = get_set_region()
+  #Update from server
+  _ = get_vaults()
+  #Get all the vaults
+  vaults = Vault.query.filter_by(region=region)
+  #Render them all nicely
+  return render_template("main.html",vaults=vaults,rnom=region,regions=WG.handlers.keys(),clients=get_valid_clients())
+
+@WG.app.route(WG.app.config.get("URL_PREFIX","")+"/<vault_name>/")
 def vault_view(vault_name):
   """
   Display the specified vault with all its contents...
@@ -77,10 +90,10 @@ def vault_view(vault_name):
       if live is not None:
         return redirect(url_for('run_jobs',vault_name=vault_name,job_id=live[0].job_id))
       vault.lock=False
-      db.session.add(vault)
-      db.session.commit()
+      WG.db.session.add(vault)
+      WG.db.session.commit()
   altvaults=Vault.query.filter_by(region=vault.region).all()
-  altclients=queues.keys()
+  altclients=WG.queues.keys()
   altclients.sort()
   #Get any completed jobs
   live=vault.get_inventory_jobs()
@@ -92,8 +105,8 @@ def vault_view(vault_name):
         #If there's an incomplete inventory job, make sure we're locked and finish
         if not vault.lock:
           vault.lock=True
-          db.session.add(vault)
-          db.session.commit()
+          WG.db.session.add(vault)
+          WG.db.session.commit()
         inv_job=None
         break
       elif j.status_code=="Succeeded":
@@ -103,119 +116,17 @@ def vault_view(vault_name):
           inv_job=url_for('run_jobs',vault_name=vault_name,job_id=j.job_id)
   return render_template("vault.html",vault=vault,altvaults=altvaults,inv_job=inv_job,clients=get_valid_clients())
 
-@app.route("/glacier/command_queue",methods=['GET'])
-def send_commands():
-  """
-  Main communication "socket" for client.  Informs the server
-  that the client is alive and connected and the server returns
-  any outstanding commands that are in the queue.
-  """
-  name = request.args.get('client_name','')
-  qid = str(request.remote_addr) if name == '' else name+' ('+str(request.remote_addr) + ')'
-  poll_freq = int(request.args.get('poll_freq',10))
-  print "Just checking in!  It's me "+qid
-  #Register this client in the live_client list (or update it)
-  live_clients[qid]=[datetime.utcnow(),poll_freq,False]
-  #Find the queue for the current machine, or return empty if nothing
-  dat=queues.get(qid,{})
-  if dat:
-    #The client is about to be busy, so update live_clients to reflect that
-    live_clients[qid][2]=True
-  #Jsonify it and return it
-  #dat=[{"action": "download", "hash": "ss2t3h542s1ntd1tns2hd3", "vault_name": "eu", "job_id": "2222sotnheus4t3h56s2nth4", "file_size": 1024},{"action": "download", "hash": "ss2t3h542s1ntd1tnsaa2hd3", "vault_name": "eu", "job_id": "2222sotnheus4t3h3456s2nth4", "file_size": 2024}]
-  return json.dumps(dat), 200
-
-@app.route("/glacier/command_returns",methods=['POST'])
-def process_callbacks():
-  """
-  When the client has processed any commands in the queue, it will
-  post any information needed by the server (such as the new archive id) 
-  back at this url.
-  Commands are then safely removed from the queue as they have been processed.
-  """
-  name = request.args.get('client_name','')
-  qid = str(request.remote_addr) if name == '' else name+' ('+str(request.remote_addr) + ')'
-  dat = deunicode(json.loads(request.get_data(as_text=True)))
-  print dat
-  for k,val in dat.iteritems():
-    #k is the hash, dat the data...
-    #A completed download job
-    if k[0]=='d':
-      print "Completed download job.  Returned:",val
-      if qid not in queues or k not in queues[qid]:
-        print "Download job not found in queue.  Strange..."
-      else:
-        _ = queues[qid].pop(k)
-    elif k[0]=='u':
-      print "Completed upload job.  Returned:",val
-      #Create a db object for it (provided it doesn't already exist)
-      vault = Vault.query.filter_by(name=val['vault_name'],region=val['region_name']).first()
-      if vault is None:
-        print "Vault not found..."
-        abort(401) 
-      archive = Archive.query.filter_by(archive_id=val['archive_id']).first()
-      if archive is not None:
-        print "Archive already added.  We shouldn't be seeing this really..."
-      else:
-        archive = Archive(val['archive_id'],val['description'],vault,filename=val['file_name'],fullpath=val['true_path'],filesize=val['file_size'],md5sum=val['md5sum'])
-        archive.insertion_date = datetime.fromtimestamp(int(val['insert_time']))
-        db.session.add(archive)
-        db.session.commit()
-      if qid not in queues or k not in queues[qid]:
-        print "Upload job not found in queue.  Strange..."
-      else:
-        _ = queues[qid].pop(k)
-  print queues
-  return 'Processed'
-
-@app.route("/glacier/settings/",methods=["GET","POST"])
+@WG.app.route(WG.app.config.get("URL_PREFIX","")+"/settings/",methods=["GET","POST"])
 def settings():
   """
   The settings page.  Where you can edit the settings.
   """
-  form=SettingsForm(**app.config)
+  form=SettingsForm(**WG.app.config)
   if form.validate_on_submit():
-    cfile=os.path.join(WebGlacier.__path__[0],"settings.cfg")
+    cfile=os.path.join(WG.__path__[0],"settings.cfg")
     save_settings(form.data,cfile)
-    app.config.from_pyfile("settings.cfg")
-    app.config.from_envvar("GLACIER_CONFIG",silent=True)
+    WG.app.config.from_pyfile("settings.cfg")
+    WG.app.config.from_envvar("GLACIER_CONFIG",silent=True)
     return redirect(url_for('settings'))
   rnom=get_set_region()
-  return render_template("settings.html",config=app.config,regions=handlers.keys(),rnom=rnom,form=form,clients=get_valid_clients())
-
-def save_settings(data,cfile):
-  """
-  Update the settings file specified in cfile with
-  the data in data.
-  """
-  #Options that if empty, don't change
-  empty_no_change=["SQL_PASSWORD"]
-  no_quote=["DEBUG","APP_HOST","SQLALCHEMY_POOL_RECYCLE","UCHUNK","DCHUNK","SQL_PORT"]
-  #First get the file name of the current settings file
-  nome=os.environ.get("GLACIER_CONFIG",cfile)
-  dat=open(nome,'r').read()
-  #Save either the current setting, or the new one if validated
-  for conf in data.keys():
-    if conf in empty_no_change and data[conf]=='':
-      continue
-    if data[conf]!=app.config[conf]:
-      if conf in no_quote:
-        dat=re.sub("(^|\n)"+str(conf)+"( |=).*","\\1"+str(conf)+" = "+str(data[conf]),dat)
-      else:
-        dat=re.sub("(^|\n)"+str(conf)+"( |=).*",'\\1'+str(conf)+' = """'+str(data[conf])+'"""',dat)
-  f=open(nome,'w')
-  f.write(dat)
-  f.close()
- 
-@app.route("/glacier/",methods=["GET"])
-def main():
-  """The main interface for the glacier database."""
-  if 'vault_select' in request.args:
-    return redirect("/glacier/"+request.args['vault_select'])
-  region = get_set_region()
-  #Update from server
-  null = get_vaults()
-  #Get all the vaults
-  vaults = Vault.query.filter_by(region=region)
-  #Render them all nicely
-  return render_template("main.html",vaults=vaults,rnom=region,regions=handlers.keys(),clients=get_valid_clients())
+  return render_template("settings.html",config=WG.app.config,regions=WG.handlers.keys(),rnom=rnom,form=form,clients=get_valid_clients())

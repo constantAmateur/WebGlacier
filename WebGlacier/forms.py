@@ -1,10 +1,19 @@
+"""
+Models to create and validate complex forms used in the application.
+"""
+
+#External dependency imports
+import os, sqlalchemy
+
+#Flask imports
+from flask import redirect, render_template
 from flask.ext.wtf import Form
 from wtforms import TextField, BooleanField, PasswordField,IntegerField,SelectField, ValidationError
 from wtforms.validators import Required, Optional, IPAddress
 
-from WebGlacier import app,handlers
-from boto.glacier.layer1 import Layer1
-import os,sqlalchemy
+#WebGlacier imports
+import WebGlacier as WG
+from WebGlacier.lib.app import build_db_key, validate_db, validate_glacier, init_handlers_from_config
 
 class Folder(object):
   """
@@ -34,7 +43,7 @@ class Folder(object):
 
 
 class SettingsForm(Form):
-  config=app.config
+  config=WG.app.config
   #SQL settings
   SQL_DIALECT = TextField(validators=[Required()])
   SQL_DATABASE_NAME = TextField(validators=[Required()])
@@ -43,7 +52,7 @@ class SettingsForm(Form):
   SQL_PASSWORD = PasswordField()
   SQL_PORT = IntegerField(validators=[Optional()])
   #Amazon settings
-  DEFAULT_REGION = SelectField(choices=[(x,x) for x in handlers.keys()])
+  DEFAULT_REGION = SelectField(choices=[(x,x) for x in WG.handlers.keys()])
   AWS_ACCESS_KEY = TextField(validators=[Required()])
   AWS_SECRET_ACCESS_KEY = TextField(validators=[Required()])
   #Web glacier settings
@@ -53,6 +62,7 @@ class SettingsForm(Form):
   #Nerd SETTINGS
   DEBUG = BooleanField()
   APP_HOST = TextField(validators=[Required(),IPAddress()])
+  URL_PREFIX = TextField()
   #SECRET_KEY = TextField()
   SQLALCHEMY_POOL_RECYCLE = IntegerField()
   SQL_DRIVER = TextField()
@@ -67,45 +77,30 @@ class SettingsForm(Form):
     self.errors['meta_sql']=[]
     self.errors['meta_amazon']=[]
 
-    #Try and connect using the given 
+    #Try and connect to the database using the given parameters
     try:
-      key = self.SQL_DIALECT.data
       #Fall back on existing value on empty password field
-      if self.SQL_PASSWORD.data=='' and app.config["SQL_PASSWORD"]!='':
-        pwd=app.config["SQL_PASSWORD"]
-      else:
-        pwd=self.SQL_PASSWORD.data
-      if self.SQL_DRIVER.data!="":
-        key = key+"+"+self.SQL_DRIVER.data
-      if self.SQL_DIALECT.data == "sqlite":
-        tmp=":////"
-      else:
-        tmp="://"
-      key = key+tmp
-      extra_slash=False
-      if self.SQL_USERNAME.data!='' and pwd!='':
-        extra_slash=True
-        key = key+self.SQL_USERNAME.data+":"+pwd+"@"
-      if self.SQL_HOSTNAME.data!='':
-        extra_slash=True
-        key = key+self.SQL_HOSTNAME.data
-        if self.SQL_PORT.data is not None:
-          key = key+":"+self.SQL_PORT.data
-      if extra_slash:
-        key = key+'/'
-      key = key+self.SQL_DATABASE_NAME.data
-      a=sqlalchemy.engine.create_engine(key)
-      b=a.connect()
-      b.close()
+      password = None if self.SQL_PASSWORD.data=='' else self.SQL_PASSWORD.data
+      if password is None and WG.app.config["SQL_PASSWORD"]!='':
+        password=WG.app.config["SQL_PASSWORD"]
+      key=build_db_key(self.SQL_DIALECT.data,self.SQL_DATABASE_NAME.data,self.SQL_HOSTNAME.data,self.SQL_USERNAME.data,password,self.SQL_DRIVER.data,self.SQL_PORT.data)
+      validate_db(key)
+      WG.app.config["SQLALCHEMY_DATABASE_URI"]=key
+      WG.db.create_all()
+      WG.validated_db=True
     except:
+      WG.validated_db=False
       self.errors['meta_sql'].append("Can't connect to SQL database")
       return False
     #Amazon connection
     try:
-      tst=Layer1(aws_access_key_id = self.AWS_ACCESS_KEY.data, aws_secret_access_key = self.AWS_SECRET_ACCESS_KEY.data,region_name=self.DEFAULT_REGION.data)
-      a=tst.list_vaults()
-      tst.close()
+      validate_glacier(self.AWS_ACCESS_KEY.data,self.AWS_SECRET_ACCESS_KEY.data,self.DEFAULT_REGION.data)
+      WG.app.config['AWS_ACCESS_KEY']=self.AWS_ACCESS_KEY.data
+      WG.app.config['AWS_SECRET_ACCESS_KEY']=self.AWS_SECRET_ACCESS_KEY.data
+      init_handlers_from_config()
+      WG.validated_glacier=True
     except:
       self.errors['meta_amazon'].append("Can't connect to Amazon")
+      WG.validated_glacier=False
       return False
     return True
