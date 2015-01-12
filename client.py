@@ -167,11 +167,13 @@ while True:
         try:
           returns[k]=download_file(command)
         except ValueError as e:
+          print "Download failed with error "+str(e)
           returns[k]={'error':e.message}
       elif k[0]=='u':
         try:
           returns[k]=upload_file(command)
-        except ValueError:
+        except ValueError as e:
+          print "Upload failed with error "+str(e)
           returns[k]={'error':e.message}
       else:
         print "Received command with invalid action.  Ignoring.  Key and Command were:",k,command
