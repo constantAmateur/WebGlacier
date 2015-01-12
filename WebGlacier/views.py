@@ -45,7 +45,6 @@ def validate_connection():
       except:
         print "Can't connect to database."
         WG.validated_db=False
-        raise ValueError
         return redirect(url_for('settings'))
     #Is the Amazon Glacier config okay?
     if not WG.validated_glacier:

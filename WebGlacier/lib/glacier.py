@@ -5,6 +5,8 @@ and various other glacier related functions.
 
 #External dependency imports
 import os,time
+from datetime import datetime
+from boto.glacier.concurrent import ConcurrentUploader
 
 #Flask imports
 from flask import request, abort
@@ -12,8 +14,8 @@ from flask import request, abort
 #WebGlacier imports
 import WebGlacier as WG
 from WebGlacier.models import Job, Vault, Archive
-from WebGlacier.lib.misc import str_to_dt
-from WebGlacier.lib.app import get_set_region
+from WebGlacier.lib.misc import str_to_dt, chunkedmd5
+from WebGlacier.lib.app import get_set_region, get_handler
 
 def process_job(job,vault):
   """
@@ -128,7 +130,7 @@ def download_archive(vault_name,archive_id,client):
     WG.queues[client]={}
   WG.queues[client][k] = command
 
-def upload_archive(vault_name,path,client,description=''):
+def upload_archive_queue(vault_name,path,client,description=''):
   """
   Create an upload job after some minor validation.
   """
@@ -151,3 +153,31 @@ def upload_archive(vault_name,path,client,description=''):
   if client not in WG.queues:
     WG.queues[client]={}
   WG.queues[client][k]=command
+
+def upload_archive(fname,vault,real_name,chunk=None,description=''):
+  """
+  Upload a file to glacier via the web-server.
+  """
+  if not os.path.isfile(fname):
+    print("%s is not a valid file!  Upload failed!" % fname)
+    return None
+  if chunk is None:
+    chunk=WG.app.config.get("CHUNK_SIZE",1048576)
+  handler = get_handler()
+  uploader = ConcurrentUploader(handler,str(vault.name),part_size=chunk)
+  print("Beginning upload of file %s.  Please by patient, there is no progress bar..." % fname)
+  file_size = os.path.getsize(fname)
+  csum = chunkedmd5(fname)
+  itime=time.time()
+  file_name = os.path.basename(real_name)
+  machine_id = str(request.remote_addr)
+  #Construct a meaningful description object for the file
+  #The limits are that the description can be no more than 1024 characters in length and must use only ascii characters between 32 and 126 (i.e., 32<=ord(char)<=126)
+  dscrip = description+'\\n'
+  dscrip = dscrip + "Uploaded at "+str(itime)+'\\n'+ "Full path "+str(real_name)+'\\n'+ "File size "+str(file_size)+'\\n' + "MD5 "+str(csum)+'\\n' + "Source machine id "+machine_id+'\\n'
+  archive_id = uploader.upload(fname,description)
+  print("Successfully uploaded %s" % fname)
+  archive = Archive(archive_id,description,vault,filename=file_name,fullpath=real_name,filesize=file_size,md5sum=csum)
+  archive.insertion_date = datetime.fromtimestamp(int(itime))
+  WG.db.session.add(archive)
+  WG.db.session.commit()

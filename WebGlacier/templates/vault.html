@@ -1,7 +1,7 @@
 {% from "macros.html" import list_vault_contents %}
 {% extends "base.html" %}
 {% block form_start %} 
-<form action="{{ config.get("URL_PREFIX","")+'/'+vault.name+'/action/submit' }}" method="post">
+<form method=POST enctype=multipart/form-data action="{{ config.get("URL_PREFIX","")+'/'+vault.name+'/action/submit' }}">
 {% endblock %}
 {% block title %} {{vault.name}} {% endblock %}
 {% block body %}
@@ -59,6 +59,19 @@
         </td>
         </form>
       </tr>#}
+    {% if not vault.lock %}
+       <tr>
+        {#<form action="action/addfile" method=post enctype=multipart/form-data>#}
+        <td><b>Add archive via server: </b></td>
+        <td><input type='file' name='file'></td>
+        <td><input type='text' name='upload_description' value="Description of file."> </td>
+        <td>
+          <button type='submit' title="Upload" class="upload-link" name='add_archive_via_server'>
+            Upload
+          </button>
+        </td>
+      </tr>
+    {% endif %}
     {% if not vault.lock and clients %}
     {#<tr>
         <form action="action/addfile" method=post enctype=multipart/form-data>
@@ -72,9 +85,8 @@
         </form>
       </tr>#}
       <tr>
-          <td><b>Add Archive(s): </b></td>
+          <td><b>Add archive via client: </b></td>
           <td><input type='text' name='upload_path'> </td>
-          <td><input type='text' name='upload_description' value="Description of file."> </td>
           <td>
             <button type='submit' title='Submit' class='upload-link' value='add_archive' name='upload_pressed'>
               Upload

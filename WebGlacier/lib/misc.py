@@ -1,6 +1,18 @@
 import os
 import collections
+import hashlib
 from datetime import datetime
+
+def chunkedmd5(filename,csize=8192):
+  """
+  Calculate the md5sum of a file without loading any more than csize bytes into
+  memory at a time
+  """
+  md5=hashlib.md5()
+  with open(filename,'rb') as f:
+    for chunk in iter(lambda: f.read(csize), b''):
+      md5.update(chunk)
+  return md5.digest().encode('hex')
 
 def ensure_path(tgt):
   """

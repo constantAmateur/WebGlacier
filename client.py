@@ -124,7 +124,7 @@ def upload_file(command):
   #Construct a meaningful description object for the file
   #The limits are that the description can be no more than 1024 characters in length and must use only ascii characters between 32 and 126 (i.e., 32<=ord(char)<=126)
   dscrip = command['description']+'\\n'
-  dscrip = dscrip + "Uploaded at "+str(itime)+'\\n'+ "Full path "+str(path)+'\\n'+ "File size "+str(file_size)+'\\n' + "MD5 "+str(csum)+'\\n' + "Source machine id "+str(command['target'])+'\\n'
+  dscrip = dscrip + "Uploaded at "+str(itime)+'\\n'+ "Full path "+str(path)+'\\n'+ "File size "+str(file_size)+'\\n' + "MD5 "+str(csum)+'\\n' + "Source machine id "+machine_id+'\\n'
   print "Uploading file %s"%file_name
   #Put some validation stuff here...
   #Do the upload

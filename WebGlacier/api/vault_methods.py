@@ -7,6 +7,7 @@ are used for vault specific tasks.
 """
 
 #External dependency imports
+import tempfile,os
 
 #Flask imports
 from flask import request, redirect, url_for, abort
@@ -15,7 +16,7 @@ from flask import request, redirect, url_for, abort
 import WebGlacier as WG
 from WebGlacier.models import Vault, Archive, Job
 from WebGlacier.lib.app import get_valid_clients, get_handler
-from WebGlacier.lib.glacier import process_job, download_archive, upload_archive, process_archive
+from WebGlacier.lib.glacier import process_job, download_archive, upload_archive, process_archive, upload_archive_queue
 
 @WG.app.route(WG.app.config.get("URL_PREFIX","")+"/<vault_name>/action/submit",methods=['POST'])
 def multi_dispatch(vault_name):
@@ -36,27 +37,100 @@ def multi_dispatch(vault_name):
     print "Changing vault"
     #Change vault and we're done
     return redirect(url_for("vault_view",vault_name=request.form['vault_select']))
+  #Extract description
+  description=request.form['upload_description']
+  if description=="Description of file.":
+    description=''
   #Either we're done, or we need to do something else
   if client in clients:
     #Did we press upload?
     if 'upload_pressed' in request.form:
-      #Extract description
-      description=request.form['upload_description']
-      if description=="Description of file.":
-        description=''
       #Do upload
       print "Doing upload from vault %s with path %s"%(vault_name,request.form['upload_path'])
-      upload_archive(vault_name,request.form['upload_path'],client,description)
+      upload_archive_queue(vault_name,request.form['upload_path'],client,description)
     elif 'download' in request.form:
       #Do download
       print "Doing download from vault %s with id %s"%(vault_name,request.form['download'])
       download_archive(vault_name,request.form['download'],client)
   else:
+    if 'add_archive_via_server' in request.form:
+      #Need to do the via elsewhere upload.
+      return upload_file(vault_name)
     print "Invalid client, doing nothing"
   print request.form
   print WG.queues
   return redirect(request.referrer)
 
+@WG.app.route(WG.app.config.get("URL_PREFIX","")+"/<vault_name>/action/addfile",methods=["POST"])
+def upload_file(vault_name):
+  """
+  Handle file upload
+  """
+  print "Got into this with vault_name=%s"%vault_name
+  handler = get_handler()
+  region = handler.region.name
+  vault = Vault.query.filter_by(name=vault_name,region=region).first()
+  print region,vault
+  if vault is None:
+    abort(401)
+  if vault.lock:
+    abort(401)
+  print "Do we has request?"
+  print request
+  print request.files
+  file = request.files['file']
+  if file:
+    print "starting to do stuff with file"
+    #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
+    tmp=tempfile.NamedTemporaryFile(dir=WG.app.config["TEMP_FOLDER"],delete=False)
+    file.save(tmp)
+    tmp.close()
+    print "Server has accepted payload"
+    upload_archive(tmp.name,vault,file.filename,description=request.form.get('upload_description',''))
+    os.remove(tmp.name)
+    return redirect(request.referrer)
+
+@WG.app.route(WG.app.config.get("URL_PREFIX","")+"/<vault_name>/action/download",methods=["GET"])
+def download_file(vault_name):
+  """
+  Download a file if the link is available...
+  """
+  handler = get_handler()
+  region = handler.region.name
+  vault = Vault.query.filter_by(name=vault_name,region=region).first()
+  if vault is None:
+    abort(401)
+  #Need to get the archive too...
+  if 'archive_id' not in request.args:
+    abort(401)
+  archive = Archive.query.filter_by(archive_id=request.args['archive_id']).first()
+  if archive is None:
+    abort(401)
+  if archive.filename!="NOT_GIVEN":
+    fname=archive.filename
+  else:
+    fname=app.config["UNKNOWN_FILENAME"]
+  #Are we serving from cache?
+  #cache = archive.cached()
+  #if cache==1:
+  #  print "Serving from cache."
+  #  return send_from_directory(os.path.join(app.config["LOCAL_CACHE"],region,vault.name),archive.archive_id,attachment_filename=fname,as_attachment=True)
+  #Is there a finished job knocking about?
+  job=archive.jobs.filter_by(action='download',completed=True,live=True,status_message="Succeeded").first()
+  if job is None:
+    abort(401)
+  #OK, everything exists, go ahead...
+  if False and cache==2:
+    #Save to cache whilst serving
+    print "Adding to cache."
+    f = open(os.path.join(app.config["LOCAL_CACHE"],region,vault.name,archive.archive_id),'wb')
+  else:
+    #Don't add to cache, just serve
+    print "No cache, only serve."
+    f = None
+  h=Headers()
+  h.add("Content-Disposition",'attachment;filename="'+fname+'"')
+  return Response(stream_with_context(job.stream_output(file_handler=f)),headers=h)
 
 @WG.app.route(WG.app.config.get("URL_PREFIX","")+"/<vault_name>/action/checkjobstatus")
 def check_job_status(vault_name):

@@ -7,7 +7,7 @@ AWS_SECRET_ACCESS_KEY = """this too"""
 
 #Database settings
 SQL_DIALECT = "sqlite"
-SQL_DATABASE_NAME = '/home/myoung/src/WebGlacier/New/glacierdb'
+SQL_DATABASE_NAME = '/path/to/glacier/db'
 SQL_USERNAME = ""
 SQL_PASSWORD = ""
 SQL_HOSTNAME = ""
@@ -17,6 +17,8 @@ SQL_DRIVER  = ''
 SQLALCHEMY_POOL_RECYCLE = 3600
 
 #Webserver parameters
+#Directory writeable by the app where we can temporarily store uploads
+TEMP_FOLDER = "/path/to/writeable/directory/"
 SECRET_KEY = """random string here"""
 #Prepends a prefix to all URLs.  Useful if you're running from somewhere other than the (sub)domain root
 URL_PREFIX = ''

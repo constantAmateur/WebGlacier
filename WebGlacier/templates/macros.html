@@ -86,9 +86,9 @@
         Please wait...
       {% else %}
         {% if has_client %}
-          <input type='image' name='download' value='{{archive.archive_id}}' src='{{ url_for("static",filename="icons/PNG/dark/24px/24_download.png") }}' title='Download'>
+          <input type='image' name='download' value='{{archive.archive_id}}' src='{{ url_for("static",filename="icons/PNG/dark/24px/24_download.png") }}' title='Download via client'>
         {% else %}
-          Connect client to download
+          <a href="action/download?archive_id={{archive.archive_id}}" class='download-link' title="Download via server">Download</a>
         {% endif %}
       {% endif %}
     </td>
