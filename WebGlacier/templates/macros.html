@@ -17,7 +17,7 @@
 
 {% macro render_vault(vault,cls='') -%}
   <tr class={{cls}}>
-    <td> <b><a href="{{vault.name}}/">{{vault.name}}</a></b> </td>
+    <td> <b><a href="{{ url_for('vault_view',vault_name=vault.name) }}">{{vault.name}}</a></b> </td>
     <td align='center'> {{vault.human_size}} </td>
     <td align='center'> {{vault.archives.count()}} </td>
     <td align='center'> {{vault.jobs.filter_by(live=True).count()}} </td>
