@@ -1,7 +1,7 @@
 {% from "macros.html" import list_vault_contents %}
 {% extends "base.html" %}
 {% block form_start %} 
-<form method=POST enctype=multipart/form-data action="{{ config.get("URL_PREFIX","")+'/'+vault.name+'/action/submit' }}">
+<form method="POST" enctype="multipart/form-data" action="{{ config.get('URL_PREFIX','')+'/'+vault.name+'/action/submit' }}">
 {% endblock %}
 {% block title %} {{vault.name}} {% endblock %}
 {% block body %}
