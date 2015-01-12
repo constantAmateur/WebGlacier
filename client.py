@@ -164,9 +164,15 @@ while True:
     returns={}
     for k,command in dat.iteritems():
       if k[0]=='d':
-        returns[k]=download_file(command)
+        try:
+          returns[k]=download_file(command)
+        except ValueError as e:
+          returns[k]={error=e.message}
       elif k[0]=='u':
-        returns[k]=upload_file(command)
+        try:
+          returns[k]=upload_file(command)
+        except ValueError:
+          returns[k]={error=e.message}
       else:
         print "Received command with invalid action.  Ignoring.  Key and Command were:",k,command
     if returns:

@@ -63,19 +63,20 @@ def process_callbacks():
         _ = WG.queues[qid].pop(k)
     elif k[0]=='u':
       print "Completed upload job.  Returned:",val
-      #Create a db object for it (provided it doesn't already exist)
-      vault = Vault.query.filter_by(name=val['vault_name'],region=val['region_name']).first()
-      if vault is None:
-        print "Vault not found..."
-        abort(401) 
-      archive = Archive.query.filter_by(archive_id=val['archive_id']).first()
-      if archive is not None:
-        print "Archive already added.  We shouldn't be seeing this really..."
-      else:
-        archive = Archive(val['archive_id'],val['description'],vault,filename=val['file_name'],fullpath=val['true_path'],filesize=val['file_size'],md5sum=val['md5sum'])
-        archive.insertion_date = datetime.fromtimestamp(int(val['insert_time']))
-        WG.db.session.add(archive)
-        WG.db.session.commit()
+      if 'error' not in val:
+        #Create a db object for it (provided it doesn't already exist)
+        vault = Vault.query.filter_by(name=val['vault_name'],region=val['region_name']).first()
+        if vault is None:
+          print "Vault not found..."
+          abort(401) 
+        archive = Archive.query.filter_by(archive_id=val['archive_id']).first()
+        if archive is not None:
+          print "Archive already added.  We shouldn't be seeing this really..."
+        else:
+          archive = Archive(val['archive_id'],val['description'],vault,filename=val['file_name'],fullpath=val['true_path'],filesize=val['file_size'],md5sum=val['md5sum'])
+          archive.insertion_date = datetime.fromtimestamp(int(val['insert_time']))
+          WG.db.session.add(archive)
+          WG.db.session.commit()
       if qid not in WG.queues or k not in WG.queues[qid]:
         print "Upload job not found in queue.  Strange..."
       else:
