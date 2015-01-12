@@ -179,6 +179,6 @@ while True:
         print "Received command with invalid action.  Ignoring.  Key and Command were:",k,command
     if returns:
       send_returns(returns)
-  except urllib3.exceptions.MaxRetryError:
+  except (urllib3.exceptions.MaxRetryError,ValueError):
     print "Server did not respond, waiting and then trying again..."
   time.sleep(check_wait)
