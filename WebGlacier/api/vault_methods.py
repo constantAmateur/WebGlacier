@@ -54,7 +54,7 @@ def multi_dispatch(vault_name):
       download_archive(vault_name,request.form['download'],client)
   else:
     if 'add_archive_via_server' in request.form:
-      print "Doing upload via server with request.form %s and request.files"%(str(request.form),str(request.files))
+      print "Doing upload via server with request.form %s and request.files %s"%(str(request.form),str(request.files))
       #Need to do the via elsewhere upload.
       return upload_file(vault_name)
     print "Invalid client, doing nothing"
@@ -85,10 +85,9 @@ def upload_file(vault_name):
     #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
     tmp=tempfile.NamedTemporaryFile(dir=WG.app.config["TEMP_FOLDER"],delete=False)
     file.save(tmp)
-    tmp.close()
     print "Server has accepted payload"
     upload_archive(tmp.name,vault,file.filename,description=request.form.get('upload_description',''))
-    os.remove(tmp.name)
+    tmp.close()
     return redirect(request.referrer)
 
 @WG.app.route(WG.app.config.get("URL_PREFIX","")+"/<vault_name>/action/download",methods=["GET"])

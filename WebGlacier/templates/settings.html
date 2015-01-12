@@ -143,7 +143,22 @@
 
   <h2> Web Glacier Settings </h2>
   <h3> Customise things about the Web Glacier interface </h3>
+    {% for error in form.errors['meta_glacier'] %}
+      <span class='error'>[{{error}}]</span>
+    {% endfor %}
+
   <table>
+    <tr>
+      <td><b>Temporary directory for uploads:</b></td>
+      <td>
+        {{form.TEMP_FOLDER()}}
+      </td>
+      <td>
+        {% for error in form.errors.TEMP_FOLDER %}
+          <span class='error'>[{{error}}]</span>
+        {% endfor %}
+      </td>
+    </tr>
     <tr>
       <td><b>File name for unknown files:</b></td>
       <td>

@@ -56,9 +56,9 @@ class SettingsForm(Form):
   AWS_ACCESS_KEY = TextField(validators=[Required()])
   AWS_SECRET_ACCESS_KEY = TextField(validators=[Required()])
   #Web glacier settings
-  UCHUNK = IntegerField(validators=[Optional()])
-  DCHUNK = IntegerField(validators=[Optional()])
+  CHUNK = IntegerField(validators=[Optional()])
   UNKNOWN_FILENAME = TextField()
+  TEMP_FOLDER = TextField(validators=[Required(),Folder()])
   #Nerd SETTINGS
   DEBUG = BooleanField()
   APP_HOST = TextField(validators=[Required(),IPAddress()])
@@ -103,4 +103,14 @@ class SettingsForm(Form):
       self.errors['meta_amazon'].append("Can't connect to Amazon")
       WG.validated_glacier=False
       return False
+    try:
+      #Check directory is writeable
+      tmp=tempfile.NamedTemporaryFile(dir=self.TEMP_FOLDER,delete=False)
+      tmp.write("Hello world")
+      tmp.close()
+    except:
+      self.errors['meta_glacier'].append("Directory is not writeable.")
+      return False
     return True
+
+
