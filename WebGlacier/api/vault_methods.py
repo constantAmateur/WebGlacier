@@ -37,14 +37,14 @@ def multi_dispatch(vault_name):
     print "Changing vault"
     #Change vault and we're done
     return redirect(url_for("vault_view",vault_name=request.form['vault_select']))
-  #Extract description
-  description=request.form['upload_description']
-  if description=="Description of file.":
-    description=''
   #Either we're done, or we need to do something else
   if client in clients:
     #Did we press upload?
     if 'upload_pressed' in request.form:
+      #Extract description
+      description=request.form.get('upload_description','')
+      if description=="Description of file.":
+        description=''
       #Do upload
       print "Doing upload from vault %s with path %s"%(vault_name,request.form['upload_path'])
       upload_archive_queue(vault_name,request.form['upload_path'],client,description)
@@ -86,7 +86,10 @@ def upload_file(vault_name):
     tmp=tempfile.NamedTemporaryFile(dir=WG.app.config["TEMP_FOLDER"],delete=False)
     file.save(tmp)
     print "Server has accepted payload"
-    upload_archive(tmp.name,vault,file.filename,description=request.form.get('upload_description',''))
+    description=request.form.get('upload_description','')
+    if description=="Description of file.":
+      description=''
+    upload_archive(tmp.name,vault,file.filename,description=description)
     tmp.close()
     return redirect(request.referrer)
 
