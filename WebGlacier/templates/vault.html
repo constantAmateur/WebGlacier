@@ -59,7 +59,7 @@
         </td>
         </form>
       </tr>#}
-    {% if not vault.lock %}
+    {% if not vault.lock and not clients %}
        <tr>
         {#<form action="action/addfile" method=post enctype=multipart/form-data>#}
         <td><b>Add archive via server: </b></td>
@@ -87,6 +87,7 @@
       <tr>
           <td><b>Add archive via client: </b></td>
           <td><input type='text' name='upload_path'> </td>
+          <td><input type='text' name='upload_description' value="Description of file."> </td>
           <td>
             <button type='submit' title='Submit' class='upload-link' value='add_archive' name='upload_pressed'>
               Upload

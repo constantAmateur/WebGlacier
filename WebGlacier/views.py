@@ -66,8 +66,6 @@ def main():
   _ = get_vaults()
   #Get all the vaults
   vaults = Vault.query.filter_by(region=region)
-  from WebGlacier.lib.app import get_client_code
-  get_client_code()
   #Render them all nicely
   return render_template("main.html",vaults=vaults,rnom=region,regions=WG.handlers.keys(),clients=get_valid_clients())
 

@@ -54,6 +54,7 @@ def multi_dispatch(vault_name):
       download_archive(vault_name,request.form['download'],client)
   else:
     if 'add_archive_via_server' in request.form:
+      print "Doing upload via server with request.form %s and request.files"%(str(request.form),str(request.files))
       #Need to do the via elsewhere upload.
       return upload_file(vault_name)
     print "Invalid client, doing nothing"
