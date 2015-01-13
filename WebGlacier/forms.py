@@ -93,12 +93,12 @@ class SettingsForm(Form):
       return False
     #Amazon connection
     try:
-      validate_glacier(self.AWS_ACCESS_KEY.data,self.AWS_SECRET_ACCESS_KEY.data,self.DEFAULT_REGION.data)
+      aws_key = self.AWS_ACCESS_KEY.data if self.AWS_ACCESS_KEY.data!='' else WG.app.config.get('AWS_ACCESS_KEY','')
+      aws_secret_key = self.AWS_SECRET_ACCESS_KEY.data if self.AWS_SECRET_ACCESS_KEY.data!='' else WG.app.config.get('AWS_SECRET_ACCESS_KEY','')
+      validate_glacier(aws_key,aws_secret_key,self.DEFAULT_REGION.data)
       #Fall back on existing value on empty fields
-      if self.AWS_ACCESS_KEY.data!='':
-        WG.app.config['AWS_ACCESS_KEY']=self.AWS_ACCESS_KEY.data
-      if self.AWS_SECRET_ACCESS_KEY.data!='':
-        WG.app.config['AWS_SECRET_ACCESS_KEY']=self.AWS_SECRET_ACCESS_KEY.data
+      WG.app.config['AWS_ACCESS_KEY']=aws_key
+      WG.app.config['AWS_SECRET_ACCESS_KEY']=aws_secret_key
       init_handlers_from_config()
       WG.validated_glacier=True
     except:
