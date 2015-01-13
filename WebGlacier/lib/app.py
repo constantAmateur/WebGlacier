@@ -26,6 +26,8 @@ def update_live_clients():
     last_seen,poll_freq,processing = dat
     delta=(now-last_seen).total_seconds()
     nmiss = delta/poll_freq
+    if WG.app.config.get("VERBOSE",False):
+      print "Client %s not seen for %d seconds giving %d misses"%(str(client),delta,nmiss)
     if nmiss > 5 and not processing:
       kill_em_all.append(client)
   #Do the killing outside the iteration loop to avoid stupidity

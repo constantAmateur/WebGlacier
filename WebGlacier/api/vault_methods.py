@@ -11,7 +11,7 @@ import tempfile,os
 from werkzeug import Headers
 
 #Flask imports
-from flask import request, redirect, url_for, abort
+from flask import request, redirect, url_for, abort, Response
 
 #WebGlacier imports
 import WebGlacier as WG
