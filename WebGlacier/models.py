@@ -13,6 +13,7 @@ from flask import request
 import WebGlacier as WG
 from WebGlacier import db
 from WebGlacier.lib.misc import human_readable, ensure_path
+from WebGlacier.lib.app import get_handler
 
 class Archive(db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -173,6 +174,40 @@ class Job(db.Model):
     #Does it still exist
     self.live = True
     
+  def stream_output(self,chunk_size=None,file_handler=None):
+    """
+    A generator that can be used to stream a download job from Amazon's
+    servers without saving it locally.  Obviously the job must be live,
+    complete and successful.  The database values are taken to be true
+    for each of these, so it makes sense to run this straight after
+    checking the status of jobs.
+    chunk_size has its usual meaning and will default to the config value
+    if not given
+    If file_handler is a file object, which should be open for writing,
+    then in addition to streaming the response, the object will be written
+    to file.  The object will be closed after the last chunk has been processed.
+    """
+    handler = get_handler(self.vault.region)
+    if self.action!='download':
+      raise TypeError("Can only stream download jobs")
+    if not self.live or not self.completed:
+      raise AttributeError("Job is not live and complete.")
+    if chunk_size is None:
+      chunk_size=int(WG.app.config.get('CHUNK_SIZE',1048576))
+    file_size = self.archive.filesize
+    vault_name = self.vault.name
+    job_id = self.job_id
+    num_chunks = int(math.ceil(file_size / float(chunk_size)))
+    for i in xrange(num_chunks):
+      byte_range = ((i * chunk_size), ((i + 1) * chunk_size) - 1)
+      response = handler.get_job_output(vault_name,job_id,byte_range)
+      if file_handler:
+        file_handler.write(response.read())
+        #Close after last chunk
+        if i==num_chunks-1:
+          file_handler.close()
+      yield response.read()
+
   def __repr__(self):
     return '<Job (%r) %r>' %(self.action,self.job_id)
 
