@@ -26,6 +26,8 @@ SECRET_KEY = """random string here"""
 URL_PREFIX = ''
 #Only relevant if running via runserver.py.  The host on which the server will listen
 APP_HOST = '127.0.0.1'
+#Print out extra diagnostic information
+VERBOSE = False
 #These **MUST** be set to False when running seriously
 DEBUG = False
 USE_RELOADER = False

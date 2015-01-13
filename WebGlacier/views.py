@@ -31,7 +31,8 @@ def validate_connection():
   if 'region' not in session:
     session['region'] = get_set_region()
   #Are we at a url where we don't need to check things?
-  print request.endpoint
+  if WG.app.config.get("VERBOSE",False):
+    print "Connecting to endpoint %s"%request.endpoint
   if request.endpoint!='settings' and request.endpoint!='static':
     #If everything has passed before, assume it will again
     #Is the db connection OK?

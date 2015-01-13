@@ -28,7 +28,8 @@ def send_commands():
   name = request.args.get('client_name','')
   qid = str(request.remote_addr) if name == '' else name+' ('+str(request.remote_addr) + ')'
   poll_freq = int(request.args.get('poll_freq',10))
-  print "Just checking in!  It's me "+qid
+  if WG.app.config.get("VERBOSE",False):
+    print "Just checking in!  It's me "+qid
   #Register this client in the live_client list (or update it)
   #Format is [Last update, poll frequency, processing(bool)]
   WG.live_clients[qid]=[datetime.utcnow(),poll_freq,False]
@@ -51,18 +52,21 @@ def process_callbacks():
   name = request.args.get('client_name','')
   qid = str(request.remote_addr) if name == '' else name+' ('+str(request.remote_addr) + ')'
   dat = deunicode(json.loads(request.get_data(as_text=True)))
-  print dat
+  if WG.app.config.get("VERBOSE",False):
+    print "Received return of %s"%str(dat)
   for k,val in dat.iteritems():
     #k is the hash, dat the data...
     #A completed download job
     if k[0]=='d':
-      print "Completed download job.  Returned:",val
+      if WG.app.config.get("VERBOSE",False):
+        print "Completed download job.  Returned:",val
       if qid not in WG.queues or k not in WG.queues[qid]:
         print "Download job not found in queue.  Strange..."
       else:
         _ = WG.queues[qid].pop(k)
     elif k[0]=='u':
-      print "Completed upload job.  Returned:",val
+      if WG.app.config.get("VERBOSE",False):
+        print "Completed upload job.  Returned:",val
       if 'error' not in val:
         #Create a db object for it (provided it doesn't already exist)
         vault = Vault.query.filter_by(name=val['vault_name'],region=val['region_name']).first()
@@ -81,5 +85,6 @@ def process_callbacks():
         print "Upload job not found in queue.  Strange..."
       else:
         _ = WG.queues[qid].pop(k)
-  print WG.queues
+  if WG.app.config.get("VERBOSE",False):
+    print "After processing return, queue is %s"%str(WG.queues)
   return 'Processed'

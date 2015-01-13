@@ -31,10 +31,12 @@ def multi_dispatch(vault_name):
   if client in clients:
     #We've got a valid client, save it
     WG.app.config['current_client'] = client
-  print client
+  if WG.app.config.get("VERBOSE",False):
+    print "Handling multi-dispatch.  Client is %s"%str(client)
   #Are we just changing vaults, if so don't need the extra validation stuff
   if 'vault_select_pressed' in request.form:
-    print "Changing vault"
+    if WG.app.config.get("VERBOSE",False):
+      print "Changing vault"
     #Change vault and we're done
     return redirect(url_for("vault_view",vault_name=request.form['vault_select']))
   #Either we're done, or we need to do something else
@@ -46,20 +48,24 @@ def multi_dispatch(vault_name):
       if description=="Description of file.":
         description=''
       #Do upload
-      print "Doing upload from vault %s with path %s"%(vault_name,request.form['upload_path'])
+      if WG.app.config.get("VERBOSE",False):
+        print "Doing upload via client from vault %s with path %s"%(vault_name,request.form['upload_path'])
       upload_archive_queue(vault_name,request.form['upload_path'],client,description)
     elif 'download' in request.form:
       #Do download
-      print "Doing download from vault %s with id %s"%(vault_name,request.form['download'])
+      if WG.app.config.get("VERBOSE",False):
+        print "Doing download via client from vault %s with id %s"%(vault_name,request.form['download'])
       download_archive(vault_name,request.form['download'],client)
   else:
     if 'add_archive_via_server' in request.form:
-      print "Doing upload via server with request.form %s and request.files %s"%(str(request.form),str(request.files))
+      if WG.app.config.get("VERBOSE",False):
+        print "Doing upload via server with request.form %s and request.files %s"%(str(request.form),str(request.files))
       #Need to do the via elsewhere upload.
       return upload_file(vault_name)
-    print "Invalid client, doing nothing"
-  print request.form
-  print WG.queues
+    if WG.app.config.get("VERBOSE",False):
+      print "Doing nothing"
+  if WG.app.config.get("VERBOSE",False):
+    print "Form that did nothing much was %s"%str(request.form)
   return redirect(request.referrer)
 
 @WG.app.route(WG.app.config.get("URL_PREFIX","")+"/<vault_name>/action/addfile",methods=["POST"])
@@ -67,25 +73,22 @@ def upload_file(vault_name):
   """
   Handle file upload
   """
-  print "Got into this with vault_name=%s"%vault_name
   handler = get_handler()
   region = handler.region.name
   vault = Vault.query.filter_by(name=vault_name,region=region).first()
-  print region,vault
   if vault is None:
     abort(401)
   if vault.lock:
     abort(401)
-  print "Do we has request?"
-  print request
-  print request.files
   file = request.files['file']
   if file:
-    print "starting to do stuff with file"
+    if WG.app.config.get("VERBOSE",False):
+      print "starting to upload file to web-server"
     #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
     tmp=tempfile.NamedTemporaryFile(dir=WG.app.config["TEMP_FOLDER"],delete=False)
     file.save(tmp)
-    print "Server has accepted payload"
+    if WG.app.config.get("VERBOSE",False):
+      print "Server has accepted payload"
     description=request.form.get('upload_description','')
     if description=="Description of file.":
       description=''
@@ -125,11 +128,9 @@ def download_file(vault_name):
   #OK, everything exists, go ahead...
   if False and cache==2:
     #Save to cache whilst serving
-    print "Adding to cache."
     f = open(os.path.join(app.config["LOCAL_CACHE"],region,vault.name,archive.archive_id),'wb')
   else:
     #Don't add to cache, just serve
-    print "No cache, only serve."
     f = None
   h=Headers()
   h.add("Content-Disposition",'attachment;filename="'+fname+'"')

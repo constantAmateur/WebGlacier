@@ -76,7 +76,8 @@ class Archive(db.Model):
     """
     me = self.description_pattern.match(self.description)
     if me is None:
-      print "Description does not match expected pattern, cannot populate fields."
+      if WG.app.config.get("VERBOSE",False):
+        print "Description does not match expected pattern, cannot populate fields."
     else:
       self.insertion_date = datetime.fromtimestamp(int(float(me.group('utime'))))
       self.fullpath = me.group('path')

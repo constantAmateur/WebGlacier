@@ -3,6 +3,35 @@
 {% block body %}
 <h1> Help </h1>
 
+<p>
+On the whole if you got far enough to be reading this in your web-browser, everything else should be fairly self explanatory.  The purposes of Web Glacier is to provide a database/interface for Amazon glacier archives that is accessible anywhere with a web browser.  Remember that Amazon glacier is for archiving data you're unlikely to need to retrieve again for a very long time.  So use it as such, or end up with a big bill.
+</p>
+
+<h2> How do I download one of my archives? </h2>
+
+<p>
+The first thing you have to do is request that Amazon glacier make it available for download.  Because Amazon glacier is a long-term tape storage service, all your data is not immediately available.  Instead, you need to request the archive you want and wait for 12-24hrs while Amazon glacier retrieves it.  This is achieved by clicking the shopping cart icon to order the retrieval of an archive.
+</p>
+
+<p>
+Once the archive is available, the shopping cart will be replaced with a download link.  If you do not have a Web Glacier client connected, this link will allow you to directly download your archive from the web browser in the usual way.  Although be aware it is passing through the Web Glacier service and wasting bandwidth (see below).  If you have connected a client, the download will be performed by the python client and the file saved in the directory you specified.
+</p>
+
+<h2> How do I upload an archive? </h2>
+
+<p>
+Much like downloading, there are two options: web-interface or python client.  The web-interface is simpler; just select your file using the dialog and hit upload.  It also is more wasteful, since you are actually uploading to the Web Glacier server, which will then send it to Amazon.  If you <a href="{{ url_for('get_client') }}">download the client</a> and set it running, you can avoid this wastage, at the cost of a little usability.
+</p>
+
+<h2> Why is uploading and downloading so difficult? </h2>
+
+<p>
+Amazon glacier does not yet support <a href="https://en.wikipedia.org/wiki/Cross-origin_resource_sharing">Cross-origin resource sharing (CORS)</a>, which makes uploading/downloading data from the web-browser somewhat inconvenient.  Basically, the web-browser cannot send a file to (or request to receive a file from) the Amazon glacier servers that Amazon won't reject as invalid.  
+</p>
+
+<p>
+To get around this, the uploading/downloading has to be done by some code not subject to the same restrictions as the web browser.  This means either you have to pass your data via the server hosting Web Glacier, which is a waste of bandwidth and disk space, or have a separate piece of code running on the computer you're using to make the upload/download.  The former option is what happens when you upload/download anything without connecting the Web Glacier client.  To do the latter, all you need to do is <a href="{{ url_for('get_client') }}">download the client</a>, set the directory you want your downloads to go in and set it running.
+</p>
 
 <h2> How do I download/upload an archive? </h2>
 

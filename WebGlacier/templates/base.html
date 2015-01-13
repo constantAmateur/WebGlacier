@@ -21,7 +21,7 @@
           <li style="float:right;">
             <span id='clientSelect'>
               {% if clients|length == 0 %}
-                <a href="{{ url_for('get_client') }}" style='color:white;'>Download</a> and run client to up/download
+                No client connected
                 <select name='client_select' style='display:none;'></select>
               {% else %}
                 Target client:
@@ -49,7 +49,6 @@
   <div id="footer">
     {% block footer %}
     &copy; Copyright 2015 by <a href="https://github.com/constantAmateur/WebGlacier/">Matthew Young</a>.  <br/><a href="{{ url_for('get_client') }}">Get the client</a>.
-
     {% endblock %}
   </div>
 </body>

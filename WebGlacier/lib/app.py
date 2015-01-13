@@ -84,7 +84,6 @@ def get_client_code():
     auth_pass = request.authorization.password
   #Get the server address
   server_name = request.url_root if WG.app.config.get("URL_PREFIX","")=="" else request.url_root.rstrip('/')+WG.app.config.get("URL_PREFIX","")+"/"
-  #print "Connecting to %s with u=%s and p=%s"%(server_name,auth_user,auth_pass)
   cbase=cbase.split('\n')
   #Regular expressions for client code
   rcomment = re.compile(r"\s*\#.*")
@@ -120,7 +119,7 @@ def save_settings(data,cfile):
   #Options that if empty, don't change
   empty_no_change=["SQL_PASSWORD"]
   #No need to encase these in quotes
-  no_quote=["DEBUG","USE_RELOADER","SQLALCHEMY_POOL_RECYCLE","UCHUNK","DCHUNK","SQL_PORT","DISABLE_HTTPS","DISABLE_AUTH"]
+  no_quote=["DEBUG","USE_RELOADER","SQLALCHEMY_POOL_RECYCLE","CHUNK","SQL_PORT","DISABLE_HTTPS","DISABLE_AUTH","VERBOSE"]
   #First get the file name of the current settings file
   nome=os.environ.get("GLACIER_CONFIG",cfile)
   fdat=open(nome,'rb').read()

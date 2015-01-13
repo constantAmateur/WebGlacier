@@ -33,11 +33,19 @@ def process_job(job,vault):
       archive = Archive.query.filter_by(archive_id = job["ArchiveId"]).first()
       if archive is None:
         #Archive either not added, or deleted
-        print "Couldn't find the archive being referenced."
+        if WG.app.config.get("VERBOSE",False):
+          print "Job points at unknown archive."
       tmp = Job(action='download',job_id = job['JobId'],vault=vault,archive=archive)
   else:
-    #if it does, ensure that the essential attributes are correct
-    pass
+    #Ensure archive is set correctly
+    if tmp.archive is None:
+      archive = Archive.query.filter_by(archive_id = job["ArchiveId"]).first()
+      if archive is None:
+        #Archive either not added, or deleted
+        if WG.app.config.get("VERBOSE",False):
+          print "Job points at unknown archive."
+      else:
+        tmp.archive=archive
   #Now add all the little extras we may have
   tmp.completed = job['Completed']
   tmp.completion_date = str_to_dt(job['CompletionDate'])
@@ -97,7 +105,8 @@ def download_archive(vault_name,archive_id,client):
   """
   Puts a download job in the queue, after some minor validation.
   """
-  print WG.queues
+  if WG.app.config.get("VERBOSE",False):
+    print "Comm queues are %s"%str(WG.queues)
   region = get_set_region()
   vault = Vault.query.filter_by(name=vault_name,region=region).first()
   if vault is None:
@@ -165,7 +174,8 @@ def upload_archive(fname,vault,real_name,chunk=None,description=''):
     chunk=WG.app.config.get("CHUNK_SIZE",1048576)
   handler = get_handler()
   uploader = ConcurrentUploader(handler,str(vault.name),part_size=chunk)
-  print("Beginning upload of file %s.  Please by patient, there is no progress bar..." % fname)
+  if WG.app.config.get("VERBOSE",False):
+    print("Beginning upload of file %s to Glacier.  Please by patient, there is no progress bar..." % fname)
   file_size = os.path.getsize(fname)
   csum = chunkedmd5(fname)
   itime=time.time()
@@ -176,7 +186,8 @@ def upload_archive(fname,vault,real_name,chunk=None,description=''):
   dscrip = description+'\\n'
   dscrip = dscrip + "Uploaded at "+str(itime)+'\\n'+ "Full path "+str(real_name)+'\\n'+ "File size "+str(file_size)+'\\n' + "MD5 "+str(csum)+'\\n' + "Source machine id "+machine_id+'\\n'
   archive_id = uploader.upload(fname,description)
-  print("Successfully uploaded %s" % fname)
+  if WG.app.config.get("VERBOSE",False):
+    print("Successfully uploaded %s" % fname)
   archive = Archive(archive_id,description,vault,filename=file_name,fullpath=real_name,filesize=file_size,md5sum=csum)
   archive.insertion_date = datetime.fromtimestamp(int(itime))
   WG.db.session.add(archive)
