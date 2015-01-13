@@ -43,7 +43,6 @@ class Folder(object):
 
 
 class SettingsForm(Form):
-  config=WG.app.config
   #SQL settings
   SQL_DIALECT = TextField(validators=[Required()])
   SQL_DATABASE_NAME = TextField(validators=[Required()])
@@ -53,8 +52,8 @@ class SettingsForm(Form):
   SQL_PORT = IntegerField(validators=[Optional()])
   #Amazon settings
   DEFAULT_REGION = SelectField(choices=[(x,x) for x in WG.handlers.keys()])
-  AWS_ACCESS_KEY = TextField(validators=[Required()])
-  AWS_SECRET_ACCESS_KEY = TextField(validators=[Required()])
+  AWS_ACCESS_KEY = PasswordField()
+  AWS_SECRET_ACCESS_KEY = PasswordField()
   #Web glacier settings
   CHUNK = IntegerField(validators=[Optional()])
   UNKNOWN_FILENAME = TextField()
@@ -95,8 +94,11 @@ class SettingsForm(Form):
     #Amazon connection
     try:
       validate_glacier(self.AWS_ACCESS_KEY.data,self.AWS_SECRET_ACCESS_KEY.data,self.DEFAULT_REGION.data)
-      WG.app.config['AWS_ACCESS_KEY']=self.AWS_ACCESS_KEY.data
-      WG.app.config['AWS_SECRET_ACCESS_KEY']=self.AWS_SECRET_ACCESS_KEY.data
+      #Fall back on existing value on empty fields
+      if self.AWS_ACCESS_KEY.data!='':
+        WG.app.config['AWS_ACCESS_KEY']=self.AWS_ACCESS_KEY.data
+      if self.AWS_SECRET_ACCESS_KEY.data!='':
+        WG.app.config['AWS_SECRET_ACCESS_KEY']=self.AWS_SECRET_ACCESS_KEY.data
       init_handlers_from_config()
       WG.validated_glacier=True
     except:

@@ -10,7 +10,11 @@ The basic idea is that in order for Glacier to be a useful service, you need to 
 
 WebGlacier stores this database on your web server and provides a simple browser based interface for managing your Glacier backups from anywhere with an internet connection and a web browser.
 
-Unfortunately, technical limitations mean that in order to upload a new archive or download one from Glacier, you need to also download and run a simple client on the machine doing the uploading/downloading.  But hopefully that's not too much hassle.
+Unfortunately, because Amazon Glacier doesn't support <a href="https://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a>, uploading or downloading a file requires running some code outside of the web-browser.
+
+This is handled by either passing everything via the web server where you stick WebGlacier, which is a waste of bandwidth and disk space, or by requiring you to download a simple python client, which is annoying.
+
+If you don't download the client, WebGlacier will default to passing everything via the web server.
 
 #Installation
 
@@ -22,19 +26,45 @@ python setup.py install
 ````
 I recommend you do this from a [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
 
-Edit `settings.cfg` to point to a valid SQL database (sqlite should be fine for most people).  While you're at it, specify the other configuration options.  As long as you have a valid database though, you can edit the settings file directly using the web interface (from /glacier/settings).
+Copy `settings.cfg.template` to `settings.cfg` in the same directory and point it to a valid SQL database (sqlite should be fine for most people).  While you're at it, specify the other configuration options.  As long as you have a valid database though, you can edit the settings file directly using the web interface (from /glacier/settings).  
 
-Run the application by typing `python runserver.py`.  The application should now be accessable at `localhost:5000/glacier` (or whatever you specified in settings.cfg).  If you point your web browser their, you should see a list of all your vaults (or none if you have none).
+For Web Glacier to work, you need to specify your Amazon Glacier credentials, a valid database and the path of a directory that the user running Web Glacier can write to.
+
+You can run the application directly by typing `python runserver.py`.  The application should be accessible at the location you specified (`localhost:5000` by default).  If you point your web browser there, you should see a list of all your vaults (or none if you have none).
 
 You can populate each of these vaults with your archives by clicking on the vault and then clicking the inventory job in the top right.  You'll have to wait for the job to finish, but once it's done your files should be added.
 
+### Deploying to a server
+
+Is pretty straight forward.  Using nginx and uwsgi, you would do something like this:
+Set nginx server block to:
+
+````
+  location = /webglacier { rewrite ^ /webglacier/; }
+  location /webglacier {
+    include uwsgi_params;
+    uwsgi_pass unix:/location/of/uwsgi/socket/for/webglacier;
+  }
+
+````
+
+This example illustrates how to deploy to a sub-directory of a webserver.  It should be obvious how to deploy to the root.  If you are deploying to a sub-directory, make sure you set `URL_PREFIX` in settings.cfg (e.g. `URL_PREFIX = "/webglacier"` for this example).
+
+Finally, you can run WebGlacier by navigating to where you installed WebGlacier and running something like:
+
+````
+uwsgi --uid www-data --gid www-data --chroot /path/to/webglacier/ -s /location/for/webglacier/uwsgi/socket -w WebGlacier:app
+````
+
+For more information see the nginx/uwsgi documentation.
+
 ## Client
 
-Setting up the client is dead simple.  Download `client.py` to a client machine, edit the first few lines to point it at a url where it can find the server and run it.  It should do the rest.
+Setting up the client is dead simple.  Download `client.py` to a client machine, verify that the auto-set parameters are correct and start it.  It should do the rest.
 
 # Using WebGlacier
 
-Should be pretty self-explanitory hopefully.  I'll write a better explanation if anyone but me starts using it.
+Should be pretty self-explanatory hopefully.  I'll write a better explanation if anyone but me starts using it.
 
 # Planned features
 
@@ -42,5 +72,4 @@ At the moment I'd describe the web interface as "basic, but functional".  It cou
 
 To upload something you have to give a file path.  It would be nice if you could use wild-cards and specify a bunch of files all at once.
 
-While you can just use this on a local network, it's real utility is with it sitting on a web server, with password protection and SSL, accessable from anywhere.  It'd be good to have a daemon version of the app, or at least something that runs on start up and restarts when it crashes.  I guess I could show a simple nginx config too.
 
