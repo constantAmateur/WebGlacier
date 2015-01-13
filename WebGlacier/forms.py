@@ -3,7 +3,7 @@ Models to create and validate complex forms used in the application.
 """
 
 #External dependency imports
-import os, sqlalchemy
+import os, sqlalchemy, tempfile
 
 #Flask imports
 from flask import redirect, render_template
@@ -55,19 +55,19 @@ class SettingsForm(Form):
   AWS_ACCESS_KEY = PasswordField()
   AWS_SECRET_ACCESS_KEY = PasswordField()
   #Web glacier settings
-  CHUNK = IntegerField(validators=[Optional()])
+  #CHUNK = IntegerField(validators=[Optional()])
   UNKNOWN_FILENAME = TextField()
   TEMP_FOLDER = TextField(validators=[Required(),Folder()])
   #Nerd SETTINGS
-  DEBUG = BooleanField()
-  APP_HOST = TextField(validators=[Required(),IPAddress()])
-  URL_PREFIX = TextField()
+  #DEBUG = BooleanField()
+  #APP_HOST = TextField(validators=[Required(),IPAddress()])
+  #URL_PREFIX = TextField()
   #SECRET_KEY = TextField()
   SQLALCHEMY_POOL_RECYCLE = IntegerField()
   SQL_DRIVER = TextField()
   #Security settings
-  DISABLE_HTTPS = BooleanField()
-  DISABLE_AUTH = BooleanField()
+  #DISABLE_HTTPS = BooleanField()
+  #DISABLE_AUTH = BooleanField()
 
   def validate(self):
     rv = Form.validate(self)
@@ -75,6 +75,7 @@ class SettingsForm(Form):
       return False
     self.errors['meta_sql']=[]
     self.errors['meta_amazon']=[]
+    self.errors['meta_glacier']=[]
 
     #Try and connect to the database using the given parameters
     try:
@@ -107,7 +108,7 @@ class SettingsForm(Form):
       return False
     try:
       #Check directory is writeable
-      tmp=tempfile.NamedTemporaryFile(dir=self.TEMP_FOLDER,delete=False)
+      tmp=tempfile.NamedTemporaryFile(dir=self.TEMP_FOLDER.data,delete=True)
       tmp.write("Hello world")
       tmp.close()
     except:

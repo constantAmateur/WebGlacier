@@ -86,7 +86,7 @@ def upload_file(vault_name):
     if WG.app.config.get("VERBOSE",False):
       print "starting to upload file to web-server"
     #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
-    tmp=tempfile.NamedTemporaryFile(dir=WG.app.config["TEMP_FOLDER"],delete=False)
+    tmp=tempfile.NamedTemporaryFile(dir=WG.app.config["TEMP_FOLDER"],delete=True)
     file.save(tmp)
     if WG.app.config.get("VERBOSE",False):
       print "Server has accepted payload"

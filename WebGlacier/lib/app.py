@@ -119,7 +119,7 @@ def save_settings(data,cfile):
   the data in data.
   """
   #Options that if empty, don't change
-  empty_no_change=["SQL_PASSWORD"]
+  empty_no_change=["SQL_PASSWORD","AWS_ACCESS_KEY","AWS_SECRET_ACCESS_KEY"]
   #No need to encase these in quotes
   no_quote=["DEBUG","USE_RELOADER","SQLALCHEMY_POOL_RECYCLE","CHUNK","SQL_PORT","DISABLE_HTTPS","DISABLE_AUTH","VERBOSE"]
   #First get the file name of the current settings file
