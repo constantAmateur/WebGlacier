@@ -8,6 +8,7 @@ are used for vault specific tasks.
 
 #External dependency imports
 import tempfile,os
+from werkzeug import Headers
 
 #Flask imports
 from flask import request, redirect, url_for, abort
