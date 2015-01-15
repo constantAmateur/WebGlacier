@@ -129,11 +129,17 @@ def save_settings(data,cfile):
   for conf in data.keys():
     if conf in empty_no_change and data[conf]=='':
       continue
-    if data[conf]!=WG.app.config.get(conf):
-      if conf in no_quote:
-        fdat=re.sub("(^|\n)"+str(conf)+"( |=).*","\\1"+str(conf)+" = "+str(data[conf]),fdat)
-      else:
-        fdat=re.sub("(^|\n)"+str(conf)+"( |=).*",'\\1'+str(conf)+' = """'+str(data[conf])+'"""',fdat)
+    #Find this entry in the config file
+    m=re.search("(?P<start>^|\n)\s*"+str(conf)+"\s*=[\s\'\"]*(?P<value>.*?)[\s\'\"]*($|\n)",fdat)
+    quoter='' if conf in no_quote else '"""'
+    #What would the new line look like?
+    new_line = str(conf)+" = "+quoter+str(data[conf])+quoter
+    #If it's not there at all, add it in
+    if not m:
+      fdat=fdat.strip("\n")+"\n"+new_line+"\n"
+    else:
+      #Otherwise, replace it with the new value.
+      fdat=fdat[:m.start()]+m.group('start')+new_line+"\n"+fdat[m.end():]
   f=open(nome,'wb')
   f.write(fdat)
   f.close()
