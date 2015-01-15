@@ -21,7 +21,6 @@ SQLALCHEMY_POOL_RECYCLE = 3600
 TEMP_FOLDER = "/path/to/writeable/directory/"
 #How large a chunk to upload files in (bytes)
 CHUNK_SIZE = 1048576
-SECRET_KEY = """random string here"""
 #Prepends a prefix to all URLs.  Useful if you're running from somewhere other than the (sub)domain root
 URL_PREFIX = ''
 #Only relevant if running via runserver.py.  The host on which the server will listen
