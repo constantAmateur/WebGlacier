@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="WebGlacier",
-    version="0.3.7.alpha",
+    version="0.3.8.alpha",
     long_description="A simple web front-end for interfacing with Amazon Glacier.",
     inclued_package_data=True,
     zip_safe=False,

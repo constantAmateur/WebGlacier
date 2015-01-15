@@ -33,7 +33,7 @@ def validate_connection():
   #Are we at a url where we don't need to check things?
   if WG.app.config.get("VERBOSE",False):
     print "Connecting to endpoint %s"%request.endpoint
-  if request.endpoint!='settings' and request.endpoint!='static':
+  if request.endpoint!='help' and request.endpoint!='settings' and request.endpoint!='static':
     #If everything has passed before, assume it will again
     #Is the db connection OK?
     if not WG.validated_db:
@@ -132,6 +132,6 @@ def settings():
     save_settings(form.data,cfile)
     WG.app.config.from_pyfile("../settings.cfg")
     WG.app.config.from_envvar("GLACIER_CONFIG",silent=True)
-    return redirect(url_for('settings'))
+    return redirect(url_for('main'))
   rnom=get_set_region()
   return render_template("settings.html",config=WG.app.config,regions=WG.handlers.keys(),rnom=rnom,form=form,clients=get_valid_clients())
