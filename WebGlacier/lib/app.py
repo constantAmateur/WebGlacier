@@ -130,7 +130,7 @@ def save_settings(data,cfile):
     if conf in empty_no_change and data[conf]=='':
       continue
     #Find this entry in the config file
-    m=re.search("(?P<start>^|\n)\s*"+str(conf)+"\s*=[\s\'\"]*(?P<value>.*?)[\s\'\"]*($|\n)",fdat)
+    m=re.search("(?P<start>^|\n)[^\S\n\r]*"+str(conf)+"[^\S\n\r]*=[^\S\n\r]*[\'\"]*(?P<value>.*?)[\'\"]*[^\S\n\r]*($|\n)",fdat)
     quoter='' if conf in no_quote else '"""'
     #What would the new line look like?
     new_line = str(conf)+" = "+quoter+str(data[conf])+quoter
