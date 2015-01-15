@@ -9,12 +9,13 @@ app = Flask(__name__,static_folder=None)
 app.config.from_pyfile("../settings.cfg")
 app.config.from_envvar("GLACIER_CONFIG",silent=True)
 #Generate a secret key if one doesn't exist.
-if 'SECRET_KEY' not in app.config:
-  import os
+if app.config.get('SECRET_KEY',None) is None:
+  import os,string,random
   #Generate a secret key and save it to file
   with open(os.path.join(__path__[0],"../settings.cfg"),'a') as f:
-    tmp=os.urandom(24)
-    f.write('\n#Auto-generated secret key using os.urandom(24)\nSECRET_KEY = """'+tmp+'"""\n')
+    src_str=string.letters+string.digits+"!@#$%^&*()[]`~+-<>?_"
+    tmp=''.join(random.choice(src_str) for _ in xrange(24))
+    f.write('\n#Auto-generated secret key\nSECRET_KEY = """'+tmp+'"""\n')
     app.config["SECRET_KEY"]=tmp
 #Make a dictionary of queues of stuff that remotes need to do
 queues = dict()
