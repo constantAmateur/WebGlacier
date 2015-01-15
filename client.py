@@ -8,7 +8,7 @@
 #Directory where files are downloaded to.  Must exist.
 ddir = '/home/myoung/Downloads/'
 #Nickname of this computer.  Used to help identify which machine should download
-client_name = 'pikachoo'
+client_name = 'ClientMachine'
 #########################################################################################
 # These must be accurate, but should be set automatically if downloaded from the server #
 #########################################################################################
@@ -117,6 +117,8 @@ def upload_file(command):
   handler = Layer1(aws_access_key_id = command['access_key'],aws_secret_access_key = command['secret_access_key'],region_name=command['region_name'])
   uploader = ConcurrentUploader(handler,command['vault_name'],part_size=uchunk)
   file_size = os.path.getsize(path)
+  if file_size==0:
+    raise ValueError("File is empty.  Nothing to upload.")
   csum = chunkedmd5(path)
   itime=time.time()
   file_name = os.path.basename(path)
