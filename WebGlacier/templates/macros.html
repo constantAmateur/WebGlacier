@@ -25,7 +25,7 @@
     <td align='center'> {{vault.last_inventory_date}} </td>
     <td align='center'> 
       {% if not vault.lock %}
-        <a href="action/deletevault?name={{vault.name}}" class='delete-link' title="Delete">Delete</a> 
+      <a href="{{ url_for('delete_vault') }}?name={{vault.name}}" class='delete-link' title="Delete">Delete</a> 
       {% else %}
         <img src="{{ url_for('static',filename='icons/PNG/dark/16px/16_lock.png') }}" alt="Vault Locked" height="16" width="16">
       {% endif %}
@@ -81,14 +81,14 @@
     <tr class="{% if live==None %} archived {% elif not live[0].completed %} pending {% else %} complete {% endif %}">
     <td align='center'>
       {% if live==None %}
-        <a href="action/getarchive?archive_id={{archive.archive_id}}" class='request-link' title="Request Retrieval">Request Data</a>
+      <a href="{{ url_for('request_archive',vault_name=archive.vault.name) }}?archive_id={{archive.archive_id}}" class='request-link' title="Request Retrieval">Request Data</a>
       {% elif not live[0].completed %}
         Please wait...
       {% else %}
         {% if has_client %}
           <input type='image' name='download' value='{{archive.archive_id}}' src='{{ url_for("static",filename="icons/PNG/dark/24px/24_download.png") }}' title='Download via client'>
         {% else %}
-          <a href="action/download?archive_id={{archive.archive_id}}" class='download-link' title="Download via server">Download</a>
+        <a href="{{ url_for('download_file',vault_name=archive.vault.name) }}?archive_id={{archive.archive_id}}" class='download-link' title="Download via server">Download</a>
         {% endif %}
       {% endif %}
     </td>
@@ -98,7 +98,7 @@
     {#<td> {{ archive.fullpath }} </td>#}
     <td align='center'> {{ archive.insertion_date }} </td>
     {% if not lock %}
-      <td align='center'> <a href="action/deletearchive?archive_id={{archive.archive_id}}" class='delete-link' title="Delete">Delete</a> </td>
+    <td align='center'> <a href="{{ url_for('delete_archive',vault_name=archive.vault.name) }}?archive_id={{archive.archive_id}}" class='delete-link' title="Delete">Delete</a> </td>
     {% endif %}
   </tr>
 </div>

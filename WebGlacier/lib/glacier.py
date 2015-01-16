@@ -177,6 +177,10 @@ def upload_archive(fname,vault,real_name,chunk=None,description=''):
   if WG.app.config.get("VERBOSE",False):
     print("Beginning upload of file %s to Glacier.  Please by patient, there is no progress bar..." % fname)
   file_size = os.path.getsize(fname)
+  if file_size==0:
+    if WG.app.config.get("VERBOSE",False):
+      print("File size is 0.  Cannot upload empty file.")
+    return None
   csum = chunkedmd5(fname)
   itime=time.time()
   file_name = os.path.basename(real_name)

@@ -1,7 +1,7 @@
 {% from "macros.html" import list_vault_contents %}
 {% extends "base.html" %}
 {% block form_start %} 
-<form method="POST" enctype="multipart/form-data" action="{{ config.get('URL_PREFIX','')+'/'+vault.name+'/action/submit' }}">
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('multi_dispatch',vault_name=vault.name) }}">
 {% endblock %}
 {% block title %} {{vault.name}} {% endblock %}
 {% block body %}
@@ -13,7 +13,7 @@
         {% if inv_job != None %}
           <a href="{{ inv_job }}" title="Force populate from completed job" class='inventory-link'>Populate</a>
         {% else %}
-          <a href="action/getinventory" title="Populate from glacier" class='inventory-link'>Request</a>
+          <a href="{{ url_for('get_inventory',vault_name=vault.name) }}" title="Populate from glacier" class='inventory-link'>Request</a>
         {% endif %}
       {% endif %}
   </div>

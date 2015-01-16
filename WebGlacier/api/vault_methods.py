@@ -88,6 +88,9 @@ def upload_file(vault_name):
     #Save to a temporary file on the server...  Needs to be done for calculating hashes and the like.
     tmp=tempfile.NamedTemporaryFile(dir=WG.app.config["TEMP_FOLDER"],delete=True)
     file.save(tmp)
+    #Ensure that things are really really written to disc.
+    tmp.file.flush()
+    os.fsync(tmp.file.fileno())
     if WG.app.config.get("VERBOSE",False):
       print "Server has accepted payload"
     description=request.form.get('upload_description','')
